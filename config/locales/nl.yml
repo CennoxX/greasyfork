@@ -38,9 +38,10 @@ nl:
     downgrade: "Oudere versie (%{version}) installeren"
     reinstall: "Versie %{version} opnieuw installeren"
     old_version_warning: "Dit is niet de nieuwste versie van dit script. Als je deze versie installeert, zal hij nooit worden bijgewerkt naar een nieuwere versie. Weet je het zeker?"
-    promoted: "Aanbevolen script"
-    author_promoted: "Aanbevolen script door maker"
-    promoted_text_html: "Wellicht ook leuk: %{script_link}."
+    post_install:
+      info_html: "‘%{script}’ zou nu geïnstalleerd moeten zijn. Als je problemen ervaart tijdens het installeren, %{help_link:bekijk dan onze documentatie}. Feedback is belangrijk om de kwaliteit van scripts op %{site_name} hoog te houden. Als je ‘%{script}’ hebt uitgeprobeerd, overweeg dan %{feedback_link:een recensie achter te laten}."
+      promoted_script_intro: "Wellicht ben je ook geïnteresseerd in…"
+      similar_script_html: "%{name} - %{description}"
     library_instructions_html: "Dit script moet niet direct worden geïnstalleerd - het is een bibliotheek voor andere scripts om op te nemen met de meta-richtlijn %{code}"
     deleted_notice: "Dit script is verwijderd."
     deleted_notice_with_reason: "Dit script is verwijderd op basis van %{report_link:deze melding}."
@@ -141,6 +142,8 @@ nl:
       month: Afgelopen 30 dagen
       year: Afgelopen 365 dagen
       all: Gehele periode
+    stats_library_usages_intro_html: "Deze scripts maken gebruik van de bibliotheek-url %{site_name} in een <code>@require</code>:"
+    stats_library_usages_script_column: Script
     derivatives_title: "%{script_name} - Afgeleiden"
     derivatives_intro: "Deze scripts kunnen gebaseerd zijn op die van jou (of die van jou gebaseerd op anderen). Als je onbevoegd gebruik van je code tegenkomt, dan kun je dit melden via het tabblad ‘Feedback’ van het desbetreffende script."
     derivatives_script_html: "%{script} van %{user} - Licentie: %{license} %{diff_link:[Diff]}"
@@ -180,6 +183,7 @@ nl:
     listing_sort_created: "Aanmaakdatum"
     listing_sort_updated: "Bijwerkdatum"
     listing_sort_name: "Naam"
+    listing_sort_entry_locales: 'Talen'
     listing_filter_by_site_label: "Scripts voor:"
     listing_filter_by_site_disable: "Alles"
     listing_filter_by_site_all_sites: "(Alle sites)"
@@ -200,6 +204,10 @@ nl:
       me: Mijn scripts
       user: Scripts van %{author_name}
     search_failed: Er is iets misgegaan tijdens het laden van de resultaten. De zoekfunctie werkt mogelijk niet geheel naar behoren. Ons team is op de hoogte van dit probleem.
+    listing_ratings_explanation: De kansberekening dat de volgende recensie een goede waardering gaat hebben, van 0 tot 1.
+    listing_locale_explanation: Dit script is beschikbaar in een of meer van de gekozen talen.
+    listing_advanced_search_applied: "Geavanceerd zoeken toegepast"
+    listing_advanced_search_clear: "Wissen"
     import: "Scripts importeren"
     new: "Zelfgeschreven script publiceren"
     new_css: "Zelfgeschreven stijl publiceren"
@@ -230,7 +238,7 @@ nl:
     post_new_script: "Script plaatsen"
     post_updated_script: "Nieuwe versie plaatsen"
     type_1_html: "Openbaar gebruikersscript - een script dat iedereen kan zien en gebruiken."
-    type_2_html: "Niet-vermeld gebruikersscript - een script voor (semi-)private doeleinden. Beschikbaar door de link ervan te delen, maar niet vermeld op %{site_name}."
+    type_2_html: "Niet-vermeld script — een gebruikersscript dat niet gelinkt is vanaf welke pagina dan ook op %{site_name}. Handig voor scripts die nog niet af zijn of  waar geen grote doelgroep voor is. Let op: met de juiste url kan het script nog steeds worden gevonden."
     type_3_html: "Bibliotheek - een script met de intentie middels <code>@require</code> door andere scripts gebruikt te worden en niet om direct geïnstalleerd te worden."
     override_warning_checkbox_label: "Tóch opslaan"
     warning_version_not_incremented_html: "Je hebt de code bijgewerkt, maar het <code>@version</code>-nummer niet verhoogd. Personen die je script reeds geïnstalleerd hebben, krijgen hierdoor mogelijk niet de recentste code."
@@ -375,7 +383,7 @@ nl:
     install_help_dialog:
       js:
         firefox: Voor het installeren van scripts heb je een extensie nodig, zoals %{tampermonkey_link:Tampermonkey}, %{greasemonkey_link:Greasemonkey} of %{violentmonkey_link:Violentmonkey}.
-        chrome: Voor het installeren van scripts heb je een extensie nodig, zoals %{tampermonkey_link:Tampermonkey} of %{violentmonkey_link:Violentmonkey}.
+        chrome: Voor het installeren van scripts heb je een extensie nodig, zoals {tampermonkey_link:Tampermonkey}.
         opera: Voor het installeren van scripts heb je een extensie nodig, zoals %{tampermonkey_link:Tampermonkey} of %{violentmonkey_link:Violentmonkey}.
         safari: Voor het installeren van scripts heb je een extensie nodig, zoals %{tampermonkey_link:Tampermonkey} of %{userscripts_link:Userscripts}.
         edge: Voor het installeren van scripts heb je een extensie nodig, zoals {tampermonkey_link:Tampermonkey}.
@@ -521,13 +529,13 @@ nl:
       title: Computer
       browser_list_html: |
           <ul>
-          <li>Chrome: %{chrome_tampermonkey_link:Tampermonkey} of %{chrome_violentmonkey_link:Violentmonkey}</li>
+          <li>Chrome: %{chrome_tampermonkey_link:Tampermonkey}</li>
           <li>Firefox: %{firefox_greasemonkey_link:Greasemonkey}, %{firefox_tampermonkey_link:Tampermonkey} of %{firefox_violentmonkey_link:Violentmonkey}</li>
           <li>Safari: %{safari_tampermonkey_link:Tampermonkey} of %{safari_userscripts_link:Userscripts}</li>
-          <li>Microsoft Edge: %{edge_tampermonkey_link:Tampermonkey} of %{edge_violentmonkey_link:Violentmonkey}</li>
+          <li>Microsoft Edge: %{edge_tampermonkey_link:Tampermonkey}</li>
           <li>Opera: %{opera_tampermonkey_link:Tampermonkey} of %{opera_violentmonkey_link:Violentmonkey}</li>
           <li>Maxthon: %{maxthon_violentmonkey_link:Violentmonkey}</li>
-          <li>%{adguard_link:AdGuard}: (geen aanvullende software vereist)</li>
+          <li>AdGuard: (geen aanvullende software vereist)</li>
           </ul>
     android_browsers:
       title: Smartphone/Tablet (Android)
@@ -972,8 +980,11 @@ nl:
       developers_credit: "%{site_name} is gecreëerd door %{developers_link:deze personen} met behulp van alle personen die bugs hebben gerapporteerd en ideeën hebben geplaatst."
       translators_credit: "%{site_name} is vertaald door %{translators_link:de Greasy Vertalingsunie op Transifex):"
       icons_credit: "De browserpictogrammen zijn afkomstig van %{browserlogos}."
+      donors_credit: "%{site_name} wordt financieel ondersteund door %{donor_links}. Als je ook donateur wilt worden, %{admin_email_link:neem dan contact op}."
+      ip_credit: "Ip-geolocatie op basis van DB-IP"
     help_with_greasymonkey: "Help met Greasemonkey"
     help_with_tampermonkey: "Hulp omtrent Tampermonkey"
+    help_with_violentmonkey: "Hulp omtrent Violentmonkey"
     contact:
       title: "Neem contact met iemand op"
       content_html: >
@@ -1375,6 +1386,7 @@ nl:
     edit_message_header: Bericht bewerken
     update_message_submit: Bericht bijwerken
     moderator_notice: Als je inbreuk op %{site_name}s regels wilt melden, gebruik dan de meldlink bij het script, de gebruiker of reactie. Moderators kunnen geen inhoud op basis van privéberichten verwijderen.
+    rate_limited: Je hebt het maximale aantal gespreksbeginnetjes bereikt. Probeer het later opnieuw.
   screenshots:
     requirements: "Maximumaantal png-, gif-, jpeg- of webp-afbeeldingen: %{number}, elk kleiner dan %{size}."
   moderator_actions:
@@ -1511,6 +1523,8 @@ nl:
       needs_description: "De volgende scripts kunnen alleen met een omschrijving worden geïmporteerd:"
       existing: "De volgende scripts waren al geïmporteerd:"
       failure: "De volgende scripts kunnen niet worden geïmporteerd:"
+      notuserscript: "Onderstaande scripts kunnen niet worden geïmporteerd. Als dit JS-bibliotheken zijn die niet direct moeten worden geïnstalleerd, klik dan op de link om ze als dusdanig toe te voegen."
+      addlibrary: "Toevoegen als bibliotheek"
   mailers:
     script_report:
       report_created_offender:

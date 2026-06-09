@@ -25,15 +25,15 @@
 
     <% if @current_locale_filter %>
       <% if current_user && !current_user.filter_locale_default %>
-        <p class="script-list-description"><%= it('scripts.listing_remove_locale_filter', language: @current_locale_filter.best_name, remove_filter_link: current_path_with_params(filter_locale: nil)) %></p>
+        <p class="script-list-description"><%= it('scripts.listing_remove_locale_filter', language: @current_locale_filter.best_name(in_locale: request_locale), remove_filter_link: current_path_with_params(filter_locale: nil)) %></p>
       <% else %>
-        <p class="script-list-description"><%= it('scripts.listing_remove_locale_filter', language: @current_locale_filter.best_name, remove_filter_link: It.link(current_path_with_params(filter_locale: '0'), rel: :nofollow)) %></p>
+        <p class="script-list-description"><%= it('scripts.listing_remove_locale_filter', language: @current_locale_filter.best_name(in_locale: request_locale), remove_filter_link: It.link(current_path_with_params(filter_locale: '0'), rel: :nofollow)) %></p>
       <% end %>
     <% elsif @offer_filtered_results_for_locale && @scripts.any? %>
       <% if current_user && !current_user.filter_locale_default %>
-        <p class="script-list-description"><%= it('scripts.listing_set_locale_filter', language: @offer_filtered_results_for_locale.best_name, set_filter_link: It.link(current_path_with_params(filter_locale: '1'), rel: :nofollow)) %></p>
+        <p class="script-list-description"><%= it('scripts.listing_set_locale_filter', language: @offer_filtered_results_for_locale.best_name(in_locale: request_locale), set_filter_link: It.link(current_path_with_params(filter_locale: '1'), rel: :nofollow)) %></p>
       <% else %>
-        <p class="script-list-description"><%= it('scripts.listing_set_locale_filter', language: @offer_filtered_results_for_locale.best_name, set_filter_link: current_path_with_params(filter_locale: nil)) %></p>
+        <p class="script-list-description"><%= it('scripts.listing_set_locale_filter', language: @offer_filtered_results_for_locale.best_name(in_locale: request_locale), set_filter_link: current_path_with_params(filter_locale: nil)) %></p>
       <% end %>
     <% end %>
 
@@ -50,8 +50,7 @@
 
     <% if scripts_to_render.empty? %>
       <% if @ad_method&.ea? %>
-        <div id="script-list-blank-ea" class="ad flat ethical-ads ethical-ads-text" data-ea-publisher="greasyfork" data-ea-type="text"></div>
-        <div data-element-name="script" data-cfasync="false" type="text/javascript" src="//endowmentoverhangutmost.com/lv/esnk/2017767/code.js" async class="__clb-2017767 ea-fallback" data-parent-id="script-list-blank-cd"></div>
+        <%= render(partial: 'shared/ea_text_ad', locals: {ad_method: @ad_method, ea_div_id: 'script-list-blank-ea'}) %>
       <% end %>
 
       <p><%= t('scripts.listing_no_scripts') %></p>
@@ -59,16 +58,13 @@
       <ol id="browse-script-list" class="script-list <%= 'showing-all-languages' if params[:language] == 'all' %>">
         <% if @ad_method&.ea? %>
           <li class="ad-entry">
-            <div id="script-list-ea" class="flat ethical-ads ethical-ads-text" data-ea-publisher="greasyfork" data-ea-type="text"></div>
-            <div data-element-name="script" data-cfasync="false" type="text/javascript" src="//chaseherbalpasty.com/lv/esnk/2050386/code.js" async class="__clb-2050386 ea-fallback" data-parent-id="script-list-cd"></div>
+            <%= render(partial: 'shared/ea_text_ad', locals: {ad_method: @ad_method, ea_div_id: 'script-list-ea'}) %>
           </li>
         <% end %>
         <%= render partial: 'scripts/script', collection: scripts_to_render, cached: overriding_locale? ? false : ->(script) { [script, request_locale] } %>
       </ol>
 
-      <% if !defined?(@paginate) || @paginate %>
-        <%= will_paginate(@scripts, renderer: @bots == 'noindex' ? WillPaginate::ActionView::LinkRendererWithNoFollow : nil) %>
-      <% end %>
+      <%= render_pagination %>
   <% end %>
 
     <p class="script-list-description"><%= t('scripts.write_your_own_html', post_a_script_link: link_to(t('scripts.post_a_script_link_text'), new_script_version_path), learn_to_write_scripts_link: link_to(t('scripts.learn_to_write_scripts_link_text'), help_writing_user_scripts_path)) %></p>

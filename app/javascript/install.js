@@ -45,6 +45,17 @@ function installationHelpFunction(js) {
     }
     let bypassLink = modal.querySelector(".installation-instructions-modal-content-bypass a")
     bypassLink.setAttribute("href", installLink.getAttribute("href"))
+
+    try {
+      gtag('event', 'Installation install help modal', {
+        'browser_type': browserType,
+        'script_id': installLink.getAttribute('data-script-id'),
+        'value': 1
+      })
+    } catch (ex) {
+      console.log(ex)
+    }
+
     return new Promise(resolve => {
       bypassLink.addEventListener("click", function (event) {
         localStorage.setItem(js ? 'manualOverrideInstallJS' : 'manualOverrideInstallCSS', '1')
@@ -83,7 +94,7 @@ async function showAntifeatureWarning() {
 }
 
 async function doInstall(installLink) {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     let pingUrl = installLink.getAttribute("data-ping-url")
 
     if (pingUrl) {
@@ -103,7 +114,25 @@ async function doInstall(installLink) {
       }
     }
 
-    location.href = installLink.href;
+    // If we think the browser's going to just open the code URL, it's better behaviour to open it in a new tab so that we can show
+    // post-install after they close that tab. Generally, script managers will intercept the navigation and handle it themselves, so
+    // we don't want to do it there. Chrome (without extensions) will show a warning banner and not open the URL. Firefox (without
+    // extensions) will open the code URL.
+    //
+    // Note that canInstallUserJS() may not work in the test environment.
+    let openCodeInNewTab = false
+    if (!canInstallUserJS()) {
+      const { detect } = await import('detect-browser')
+      if (detect().name == 'firefox') {
+        openCodeInNewTab = true
+      }
+    }
+    if (openCodeInNewTab) {
+      window.open(installLink.href, '_blank');
+    } else {
+      location.href = installLink.href
+    }
+
     resolve(true)
   })
 }

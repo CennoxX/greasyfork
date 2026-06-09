@@ -46,6 +46,14 @@ Rails.application.routes.draw do
 
   get '/forum', to: redirect('/discussions'), status: 301
 
+  lowercase_locale_redirector = redirect do |path_params, req|
+    good_locale_parts = path_params[:locale].split('-')
+    good_locale_parts[1].upcase!
+    req.fullpath.sub("/#{path_params[:locale]}", "/#{good_locale_parts.join('-')}")
+  end
+  get '/:locale', constraints: { locale: /fr-ca|pt-br|zh-cn|zh-tw/ }, to: lowercase_locale_redirector
+  get '/:locale/*', constraints: { locale: /fr-ca|pt-br|zh-cn|zh-tw/ }, to: lowercase_locale_redirector
+
   scope '(:locale)', locale: /ar|be|bg|ckb|cs|da|de|el|en|es|es-419|fi|fr|fr-CA|he|hr|hu|id|it|ja|ka|ko|mr|nb|nl|eo|pl|pt-BR|ro|ru|sk|sr|sv|th|tr|uk|ug|vi|zh-CN|zh-TW/ do
     get '/users', to: 'users#index', as: 'users'
     get '/users/webhook-info', to: 'users#webhook_info', as: 'user_webhook_info'
@@ -144,6 +152,9 @@ Rails.application.routes.draw do
       resources :script_versions, only: [:create, :new, :index], path: 'versions' do
         get 'delete(.:format)', to: 'script_versions#delete', as: 'delete'
         post 'delete(.:format)', to: 'script_versions#do_delete', as: 'do_delete'
+        collection do
+          post 'prefill'
+        end
       end
 
       resources :discussions, only: [:show, :create, :show, :destroy] do
@@ -161,7 +172,11 @@ Rails.application.routes.draw do
         end
       end
     end
-    resources :script_versions, only: [:create, :new]
+    resources :script_versions, only: [:create, :new] do
+      collection do
+        post 'prefill'
+      end
+    end
     get 'script_versions/additional_info_form', to: 'script_versions#additional_info_form', as: 'script_version_additional_info_form'
     get 'script_versions/confirm_new_author', to: 'script_versions#confirm_new_author', as: 'script_version_confirm_new_author'
     resources :users, only: :show do
@@ -190,6 +205,9 @@ Rails.application.routes.draw do
           end
         end
       end
+      collection do
+        post 'ban_with_ip', to: 'users#ban_with_ip', as: 'ban_with_ip'
+      end
     end
 
     resources :discussions, path: 'discussions/:category', category: /greasyfork|development|requests|script-discussions|no-scripts|moderators/, only: [:index, :show, :destroy], as: 'category_discussion' do
@@ -212,6 +230,7 @@ Rails.application.routes.draw do
     get 'help', to: 'help#index', as: 'help'
     get 'help/allowed-markup', to: 'help#allowed_markup', as: 'help_allowed_markup'
     get 'help/antifeatures', to: 'help#antifeatures', as: 'help_antifeatures'
+    get 'help/api', to: 'help#api', as: 'help_api'
     get 'help/cdns', to: 'help#cdns', as: 'help_cdns'
     get 'help/code-rules', to: 'help#code_rules', as: 'help_code_rules'
     get 'help/contact', to: 'help#contact', as: 'help_contact'

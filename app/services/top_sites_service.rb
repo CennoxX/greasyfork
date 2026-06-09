@@ -4,7 +4,7 @@ class TopSitesService
   class << self
     # Returns a hash, key: site name, value: hash with keys installs, scripts
     def get_by_sites(script_subset:, locale_id: nil, user_id: nil, **cache_options)
-      return ApplicationController.cache_with_log("scripts/get_by_sites/#{script_subset}/#{locale_id}/#{user_id}", cache_options) do
+      return CachingService.cache_with_log("scripts/get_by_sites/#{script_subset}/#{locale_id}/#{user_id}", cache_options) do
         subset_clause = case script_subset
                         when :greasyfork
                           'AND `sensitive` = false'
@@ -54,21 +54,21 @@ class TopSitesService
     end
 
     def get_top_by_sites(script_subset:, locale_id: nil, user_id: nil)
-      return ApplicationController.cache_with_log("scripts/get_top_by_sites/#{script_subset}/#{locale_id}/#{user_id}") do
+      return CachingService.cache_with_log("scripts/get_top_by_sites/#{script_subset}/#{locale_id}/#{user_id}") do
         get_by_sites(script_subset:, locale_id:, user_id:).sort { |a, b| b[1][:installs] <=> a[1][:installs] }.first(10)
       end
     end
 
     def all_sites_count
-      return ApplicationController.cache_with_log('all_sites_count', expires_in: 10.minutes) do
-        sql = <<-SQL.squish
-        SELECT
-          sum(daily_installs) install_count, count(distinct scripts.id) script_count
-        FROM scripts
-        WHERE
-          script_type = 1
-          AND delete_type is null
-          AND NOT EXISTS (SELECT * FROM script_applies_tos WHERE script_id = scripts.id)
+      return CachingService.cache_with_log('all_sites_count', expires_in: 10.minutes) do
+        sql = <<~SQL.squish
+          SELECT
+            sum(daily_installs) install_count, count(distinct scripts.id) script_count
+          FROM scripts
+          WHERE
+            script_type = 1
+            AND delete_type is null
+            AND NOT EXISTS (SELECT * FROM script_applies_tos WHERE script_id = scripts.id)
         SQL
         Script.connection.select_all(sql).first
       end
@@ -85,7 +85,7 @@ class TopSitesService
     end
 
     def refresh!
-      (Locale.where(ui_available: true).pluck(:id) + [nil]).each do |locale_id|
+      (Locale.ui_available.pluck(:id) + [nil]).each do |locale_id|
         SCRIPT_SUBSETS.each do |script_subset|
           TopSitesService.get_by_sites(script_subset:, locale_id:, force: true)
         end

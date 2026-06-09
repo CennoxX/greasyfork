@@ -106,14 +106,17 @@ dt[title] > span {
   box-sizing: border-box;
   width: 100%;
 }
-.radio-group input[type=radio] {
+.radio-group input[type=radio], .radio-group input[type=checkbox] {
   margin-left: 1em;
+  vertical-align: top;
 }
 .form-control label {
   font-weight: bold;
 }
 .form-control label.radio-label, .form-control label.checkbox-label {
   font-weight: normal;
+  max-width: calc(100% - 38px);
+  vertical-align: top;
 }
 label.subselection-radio-title {
   font-weight: normal;
@@ -122,7 +125,7 @@ label.subselection-radio-title {
   margin-left: 3px;
 }
 .field_with_errors textarea {
-  background-color: #FEE;
+  background-color: var(--field-with-errors);
 }
 .label-note {
   font-size: smaller;
@@ -265,41 +268,6 @@ label.subselection-radio-title {
 @media screen and (max-width: 720px) {
   .script-list, #script-content {
     margin-left: unset;
-  }
-}
-
-.pagination, .script-list + .pagination, .user-list + .pagination {
-  font-size: 18px;
-  display: block;
-  background-color: transparent;
-  padding: 0;
-  margin: 0;
-  border-radius: 5px;
-}
-.pagination > *, .script-list + .pagination > *, .user-list + .pagination > * {
-  display: inline-block;
-  background-color: var(--pagination-background-color);
-  padding: 0.5em;
-  border-radius: 5px;
-  text-decoration: none;
-}
-.pagination .disabled {
-  display: none;
-}
-.pagination .current {
-  font-style: normal;
-  font-weight: bold;
-}
-.pagination .current, .pagination .gap {
-  background-color: transparent;
-}
-.pagination > a:hover, .pagination > a:focus {
-  background-color: var(--pagination-hover-background-color);
-}
-@media screen and (max-width: 400px) {
-  .pagination, .script-list + .pagination, .user-list + .pagination {
-    padding-left: 1em;
-    padding-right: 1em;
   }
 }
 

@@ -1,17 +1,19 @@
+require 'memo_wise'
+
 module LocalizedRequest
   extend ActiveSupport::Concern
-  extend Memoist
+  prepend MemoWise
 
   included do
     before_action :set_locale
     before_action :nobots_overriding_locale
-    helper_method :request_locale, :overriding_locale?
+    helper_method :request_locale, :overriding_locale?, :site_locales
   end
 
   def request_locale
     Locale.fetch_locale(I18n.locale)
   end
-  memoize :request_locale
+  memo_wise :request_locale
 
   def set_locale
     # User chose "Help us translate" in the locale picker
@@ -26,7 +28,7 @@ module LocalizedRequest
        action_name == 'routing_error' ||
        %w[js json jsonp].include?(params[:format])
       params[:locale] = I18n.locale_available?(params[:locale]) ? params[:locale] : 'en'
-      I18n.locale = params[:locale]
+      Pagy::I18n.locale = I18n.locale = params[:locale]
       return
     end
 
@@ -36,7 +38,7 @@ module LocalizedRequest
     end
 
     # Redirect a logged-in user to their preferred locale, if it's available
-    if current_user&.locale_id && current_user.locale.ui_available && params[:locale] != current_user.locale.code && (!overriding_locale? || params[:locale].nil?)
+    if current_user&.locale_id && current_user.locale.ui_available? && params[:locale] != current_user.locale.code && (!overriding_locale? || params[:locale].nil?)
       redirect_to current_path_with_params(locale: current_user.locale.code, locale_override: nil), status: :found
       return
     end
@@ -49,7 +51,7 @@ module LocalizedRequest
 
     # Locale is properly set
     if params[:locale].present?
-      I18n.locale = params[:locale]
+      Pagy::I18n.locale = I18n.locale = params[:locale]
       if cookies[:locale_messaged].nil?
         # Only hassle the user about locales once per session.
         set_cookie(:locale_messaged, true)
@@ -86,7 +88,7 @@ module LocalizedRequest
   #   The top locale we can display.
   #   A locale the user would prefer more, but we don't support (can be nil)
   def detect_locale(current_user, accept_language)
-    return [current_user.locale, nil] if current_user&.locale&.ui_available
+    return [current_user.locale, nil] if current_user&.locale&.ui_available?
 
     top_displayable_locale = nil
     top_undisplayable_locale = current_user&.locale
@@ -94,7 +96,7 @@ module LocalizedRequest
     parse_accept_language(accept_language).each do |locale_code|
       locales = Locale.matching_locales(locale_code, chinese_only: cn_greasy?)
       locales.each do |l|
-        if l.ui_available
+        if l.ui_available?
           top_displayable_locale = l
           break
         end
@@ -132,5 +134,11 @@ module LocalizedRequest
 
   def nobots_overriding_locale
     @bots = 'noindex' if overriding_locale?
+  end
+
+  def site_locales(in_locale:)
+    Rails.cache.fetch("site_locales/#{in_locale.code}", expires_in: 1.hour) do
+      Locale.sort_by_name(Locale.ui_available, in_locale:).map { |l| [l.code, l.best_name(in_locale:)] }
+    end
   end
 end

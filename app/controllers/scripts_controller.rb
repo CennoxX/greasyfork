@@ -22,11 +22,11 @@ class ScriptsController < ApplicationController
   before_action do
     case action_name.to_sym
     when *MEMBER_AUTHOR_ACTIONS
-      @script = Script.find(params[:id])
+      @script = Script.find(params.expect(:id))
       render_access_denied unless @script.users.include?(current_user)
       @bots = 'noindex'
     when *MEMBER_AUTHOR_OR_MODERATOR_ACTIONS
-      @script = Script.find(params[:id])
+      @script = Script.find(params.expect(:id))
       render_access_denied unless @script.users.include?(current_user) || current_user&.moderator?
       @bots = 'noindex'
     when *MEMBER_MODERATOR_ACTIONS
@@ -34,10 +34,10 @@ class ScriptsController < ApplicationController
         render_access_denied
         next
       end
-      @script = Script.find(params[:id])
+      @script = Script.find(params.expect(:id))
       @bots = 'noindex'
     when *MEMBER_PUBLIC_ACTIONS
-      @script = Script.find(params[:id])
+      @script = Script.find(params.expect(:id))
       set_bots_directive unless handle_publicly_deleted(@script)
     when *MEMBER_PUBLIC_ACTIONS_WITH_SPECIAL_LOADING
       # Nothing
@@ -74,7 +74,7 @@ class ScriptsController < ApplicationController
 
     if cachable_request
       # We may not need everything. Put it off till later.
-      @script = Script.find(params[:id].to_i)
+      @script = Script.find(params.expect(:id).to_i)
     else
       @script, @script_version = versionned_script(params[:id], params[:version])
     end
@@ -171,12 +171,11 @@ class ScriptsController < ApplicationController
 
           return if handle_wrong_url(@script, :id)
 
-          @discussions = @script.discussions
-                                .visible
-                                .where(report_id: nil)
-                                .includes(:stat_first_comment, :stat_last_replier, :poster)
-                                .order(stat_last_reply_date: :desc)
-                                .paginate(page: page_number, per_page: per_page(default: 25))
+          @discussions = apply_pagination(@script.discussions
+                                                 .visible
+                                                 .where(report_id: nil)
+                                                 .includes(:stat_first_comment, :stat_last_replier, :poster)
+                                                 .order(stat_last_reply_date: :desc), default_per_page: 25)
           @discussion = @discussions.build(discussion_category: DiscussionCategory.script_discussions, poster: current_user)
           @discussion.rating = Discussion::RATING_QUESTION if @discussion.by_script_author?
 
@@ -344,7 +343,7 @@ class ScriptsController < ApplicationController
       return
     end
 
-    unless install_keys.any? { |install_key| Digest::SHA1.hexdigest(request.remote_ip + script_id + install_key) == params[:ping_key] }
+    unless install_keys.any? { |install_key| Digest::SHA1.hexdigest("#{request.remote_ip}#{script_id}#{install_key}") == params[:ping_key] }
       Rails.logger.warn("Install not recorded for script #{script_id} and IP #{ip} - install key does not match.")
       head :no_content
       return
@@ -357,7 +356,7 @@ class ScriptsController < ApplicationController
     end
 
     passed_checks = PingRequestCheckingService.check(request)
-    session[PingRequestChecking::SessionInstallKey::SESSION_KEY] -= [script_id.to_i] if session[PingRequestChecking::SessionInstallKey::SESSION_KEY]
+    session[PingRequestChecking::SessionInstallKey::SESSION_KEY] -= [script_id] if session[PingRequestChecking::SessionInstallKey::SESSION_KEY]
     unless passed_checks.count == PingRequestCheckingService::STRATEGIES.count
       Rails.logger.warn("Install not recorded for script #{script_id} and IP #{ip} - only passed ping checks: #{passed_checks.join(', ')}")
       head :no_content
@@ -654,7 +653,13 @@ class ScriptsController < ApplicationController
           @bots = 'noindex' unless params[:period].nil?
           @canonical_params = [:id, :version]
           set_bots_directive
-          render_to_string
+          if @script.library?
+            using_script_ids = @script.library_usages_as_library.pluck(:script_id)
+            @using_scripts = Script.listable(script_subset).where(id: using_script_ids).order(:id)
+            render_to_string 'library_stats'
+          else
+            render_to_string
+          end
         end
         format.csv do
           data = CSV.generate do |csv|
@@ -777,16 +782,17 @@ class ScriptsController < ApplicationController
 
   def update_locale
     update_params = params.expect(script: [:locale_id])
-    if @script.update(update_params)
+
+    Script.transaction do
+      @script.update!(update_params)
+      @script.localized_attributes.where(attribute_default: true).update_all(locale_id: @script.locale_id)
       unless @script.users.include?(current_user)
         ModeratorAction.create!(script: @script, moderator: current_user, action_taken: :update_locale, reason: "Changed to #{@script.locale.code}#{' (auto-detected)' if update_params[:locale_id].blank?}")
       end
-      flash.now[:notice] = I18n.t('scripts.updated')
-      redirect_to admin_script_path(@script)
-      return
     end
 
-    render :admin
+    flash[:notice] = I18n.t('scripts.updated')
+    redirect_to admin_script_path(@script)
   end
 
   def invite
@@ -840,7 +846,7 @@ class ScriptsController < ApplicationController
   end
 
   def remove_author
-    user = User.find(params[:user_id])
+    user = User.find(params.expect(:user_id))
     if @script.authors.count < 2 || @script.authors.where(user:).none?
       flash[:error] = t('.failure')
       return
@@ -873,9 +879,7 @@ class ScriptsController < ApplicationController
     rescue ActionDispatch::RemoteIp::IpSpoofAttackError
       # do nothing, ip remains nil
     end
-    # strip the slug
-    script_id = params[:id].to_i.to_s
-    return [ip, script_id]
+    [ip, params[:id].to_i]
   end
 
   def post_install
@@ -1005,7 +1009,7 @@ class ScriptsController < ApplicationController
 
   def handle_meta_request(language)
     unless update_host?
-      script = Script.find(params[:id].to_i)
+      script = Script.find(params.expect(:id).to_i)
       redirect_to(script.code_url(sleazy: sleazy?, cn_greasy: cn_greasy?, format_override: (language == :css) ? 'meta.css' : 'meta.js', version_id: params[:version].presence), status: :moved_permanently, allow_other_host: true)
       return
     end

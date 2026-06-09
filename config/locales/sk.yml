@@ -40,9 +40,10 @@ sk:
     downgrade: "Prejsť na verziu %{version}"
     reinstall: "Preinštalovať verziu %{version}"
     old_version_warning: "Toto nie je posledná verzia tohto skriptu. Ak ju nainštalujete, už nikdy viac nebude aktualizovaná na najnovšiu verziu. Aj tak nainštalovať?"
-    promoted: "Propagovaný skript"
-    author_promoted: "Autor skriptu navrhuje"
-    promoted_text_html: "Tiež sa vám môže páčiť %{script_link}."
+    post_install:
+      info_html: "Teraz by ste mali mať nainštalovaný %{script}. Ak ste mali problémy s inštaláciou, %{help_link:prečítajte si našu dokumentáciu}. Vaša spätná väzba je dôležitá na udržanie kvality skriptov na %{site_name}. Keď ste vyskúšali %{script}, zvážte, prosím, %{feedback_link:napísanie recenzie}."
+      promoted_script_intro: "Možno sa vám bude páčiť aj"
+      similar_script_html: "%{name} – %{description}"
     library_instructions_html: "Tento skript by nemal byť nainštalovaný priamo. Je to knižnica pre ďalšie skripty, ktorú by mali používať cez meta príkaz  %{code}"
     deleted_notice: "Tento skript bol odstránený."
     deleted_notice_with_reason: "Tento skript bol odstránený na základe %{report_link:tejto sťažnosti}."
@@ -140,6 +141,8 @@ sk:
       month: Posledných 30 dní
       year: Posledných 365 dní
       all: Celé obdobie
+    stats_library_usages_intro_html: "Nasledujúce skripty používajú adresu URL tejto knižnice %{site_name} v <code>@require</code>:"
+    stats_library_usages_script_column: Skript
     derivatives_title: "%{script_name} - Odvodené skripty"
     derivatives_intro: "Tieto skripty môžu byť založené na vašich (alebo vaše môžu byť založené na ich). Ak zistíte neoprávnené použitie vášho kódu, nahláste ho na cez spätnú väzbu daného skriptu."
     derivatives_script_html: "%{script} od používateľa %{user}, licencia: %{license} %{diff_link:[Diff]}"
@@ -179,6 +182,7 @@ sk:
     listing_sort_created: "Dátumu vytvorenia"
     listing_sort_updated: "Dátumu aktualizovania"
     listing_sort_name: "Názvu"
+    listing_sort_entry_locales: 'Jazky'
     listing_filter_by_site_label: "Zobrazenie skriptov pre:"
     listing_filter_by_site_disable: "Všetky"
     listing_filter_by_site_all_sites: "(Všetky stránky)"
@@ -199,6 +203,10 @@ sk:
       me: Moje skripty
       user: Skripty od %{author_name}
     search_failed: Pri načítavaní výsledkov sa niečo pokazilo. Niektoré funkcie vyhľadávania nemusia fungovať. Boli sme upozornení na problém.
+    listing_ratings_explanation: Pravdepodobnosť, že ďalšia prijatá recenzia bude mať dobré hodnotenie, od 0 do 1.
+    listing_locale_explanation: Skript je k dispozícii v ktoromkoľvek z vybraných jazykov.
+    listing_advanced_search_applied: "Použilo sa rozšírené vyhľadávanie"
+    listing_advanced_search_clear: "Vyčistiť"
     import: "Importovať skripty"
     new: "Zverejniť skript, ktorý ste napísali"
     new_css: "Zverejniť štýl, ktorý ste napísali"
@@ -229,7 +237,7 @@ sk:
     post_new_script: "Odoslať skript"
     post_updated_script: "Odoslať novú verziu"
     type_1_html: "Verejný používateľský skript - používateľský skript pre všetkých"
-    type_2_html: "Používateľský skript vyradený zo zoznamu - používateľský skript pre (polo)súkromné použite. Dostupný len cez priamy odkaz, ale nenachádza sa na zozname %{site_name}."
+    type_2_html: "Nezaradený používateľský skript – používateľský skript, na ktorý nie je žiadny odkaz na %{site_name}. Pre skripty, na ktorých sa pracuje, alebo pre skripty, ktoré by neboli všeobecne užitočné pre ostatných. Nebráni ostatným v prístupe k nemu, ak poznajú jeho adresu."
     type_3_html: "Knižnica - skript určený pre <code>@require</code> v iných skriptoch a neinštaluje sa priamo."
     override_warning_checkbox_label: "Aj tak uložiť"
     warning_version_not_incremented_html: "Aktualizovali ste kód, ale nepovýšili ste <code>@version</code>. Tí, ktorí si predtým nainštalovali váš skript nemusia dostať aktualizáciu."
@@ -374,7 +382,7 @@ sk:
     install_help_dialog:
       js:
         firefox: Na nainštalovanie skriptu si budete musieť nainštalovať rozšírenie, ako napríklad %{tampermonkey_link:Tampermonkey}, %{greasemonkey_link:Greasemonkey} alebo %{violentmonkey_link:Violentmonkey}.
-        chrome: Na nainštalovanie skriptu si budete musieť nainštalovať rozšírenie, ako napríklad %{tampermonkey_link:Tampermonkey}, % alebo %{violentmonkey_link:Violentmonkey}.
+        chrome: Na inštaláciu tohto skriptu je potrebné nainštalovať rozšírenie, ako napríklad %{tampermonkey_link:Tampermonkey}.
         opera: Na nainštalovanie skriptu si budete musieť nainštalovať rozšírenie, ako napríklad %{tampermonkey_link:Tampermonkey}, % alebo %{violentmonkey_link:Violentmonkey}.
         safari: Na nainštalovanie skriptu si budete musieť nainštalovať rozšírenie, ako napríklad %{tampermonkey_link:Tampermonkey} alebo %{userscripts_link:Userscripts}.
         edge: Na inštaláciu tohto skriptu je potrebné nainštalovať rozšírenie, ako napríklad %{tampermonkey_link:Tampermonkey}.
@@ -526,10 +534,10 @@ sk:
       title: Stolný počítač
       browser_list_html: |
           <ul>
-          <li>Chrome: %{chrome_tampermonkey_link:Tampermonkey} alebo %{chrome_violentmonkey_link:Violentmonkey}</li>
-          <li>Firefox: %{firefox_greasemonkey_link:Greasemonkey}, %{firefox_tampermonkey_link:Tampermonkey}, alebo %{firefox_violentmonkey_link:Violentmonkey}</li>
-          <li>Safari: %{safari_tampermonkey_link:Tampermonkey} alebo %{safari_userscripts_link:Userscripty}</li>
-          <li>Microsoft Edge: %{edge_tampermonkey_link:Tampermonkey} alebo %{edge_violentmonkey_link:Violentmonkey}</li>
+          <li>Chrome: %{chrome_tampermonkey_link:Tampermonkey}</li>
+          <li>Firefox: %{firefox_greasemonkey_link:Greasemonkey}, {firefox_tampermonkey_link:Tampermonkey}, alebo %{firefox_violentmonkey_link:Violentmonkey}</li>
+          <li>Safari: %{safari_tampermonkey_link:Tampermonkey} alebo %{safari_userscripts_link:Userscripts}</li>
+          <li>Microsoft Edge: %{edge_tampermonkey_link:Tampermonkey}</li>
           <li>Opera: %{opera_tampermonkey_link:Tampermonkey} alebo %{opera_violentmonkey_link:Violentmonkey}</li>
           <li>Maxthon: %{maxthon_violentmonkey_link:Violentmonkey}</li>
           <li>%{adguard_link:AdGuard}: (nie je potrebný žiadny ďalší softvér)</li>
@@ -992,8 +1000,11 @@ sk:
       developers_credit: "Samotný %{site_name} je zostavený %{developers_link:týmito ľuďmi} spolu s pomocou  všetkých, ktorí nahlasujú chyby a zasielajú námety na vylepšenie."
       translators_credit: "%{site_name} je preložený %{translators_link:prekladateľmi Greasy Translation Force na Transifexe}:"
       icons_credit: "Ikony prehliadačov sú z %{browserlogos}."
+      donors_credit: "%{site_name} finančne podporili %{donor_links}. Ak by ste chceli poskytnúť finančnú podporu, %{admin_email_link:kontaktujte nás}."
+      ip_credit: "Geolokalizácia IP cez DB-IP"
     help_with_greasymonkey: "Pomoc s Greasemonkey"
     help_with_tampermonkey: "Pomoc s Tampermonkey"
+    help_with_violentmonkey: "Pomoc s Violentmonkey"
     contact:
       title: "Kontakty"
       content_html: >
@@ -1402,6 +1413,7 @@ sk:
     edit_message_header: Upraviť správu
     update_message_submit: Aktualizovať správu
     moderator_notice: Ak chcete nahlásiť porušenie pravidiel %{site_name}, použite odkaz Nahlásiť na daný skript, používateľa alebo komentár. Moderátori nemôžu odstrániť obsah na základe hlásenia cez súkromné správy.
+    rate_limited: Dosiahli ste limit počtu konverzácií, ktoré môžete začať. Skúste to neskôr.
   screenshots:
     requirements: "Maximálne %{number} PNG, GIF, JPEG, alebo WebP obrázkov, každý menší ako %{size}."
   moderator_actions:
@@ -1543,6 +1555,8 @@ sk:
       needs_description: "Nasledujúce skripty potrebujú na importovanie popis:"
       existing: "Nasledujúce skripty už boli importované:"
       failure: "Nasledujúce skripty sa nepodarilo importovať:"
+      notuserscript: "Nasledujúce skripty sa nepodarilo importovať. Ak ide o JS knižnice, ktoré nie sú určené na priamu inštaláciu, môžete si ich pridať kliknutím na odkaz."
+      addlibrary: "Pridať ako knižnicu"
   mailers:
     script_report:
       report_created_offender:

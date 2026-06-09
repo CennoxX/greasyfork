@@ -1,4 +1,8 @@
+require 'memo_wise'
+
 class Locale < ApplicationRecord
+  prepend MemoWise
+
   @locale_cache = {}
 
   has_many :scripts, dependent: :restrict_with_exception
@@ -14,13 +18,47 @@ class Locale < ApplicationRecord
     fetch_locale('zh-CN')
   end
 
-  def display_text
-    "#{best_name} (#{code})"
+  def display_text(in_locale: I18n.locale)
+    "#{best_name(in_locale:)} (#{code})"
   end
 
-  def best_name
+  def best_name(in_locale:)
+    in_locale = in_locale.code if in_locale.is_a?(Locale)
+
+    # Find what locale we're going to display
+    begin
+      I18nData.languages(in_locale)
+    rescue I18nData::NoTranslationAvailable
+      in_locale = in_locale.to_s
+      language_only_code = in_locale.split('-')[0]
+      if language_only_code == in_locale
+        in_locale = nil
+      else
+        begin
+          I18nData.languages(language_only_code)
+          in_locale = language_only_code
+        rescue I18nData::NoTranslationAvailable
+          in_locale = nil
+        end
+      end
+    end
+
+    if in_locale
+      language_code, country_code = code.split('-', 2)
+
+      language_name_in_current_language = I18nData.languages(in_locale)[language_code.upcase]&.split(/[;,()]/)&.first
+      country_name_in_current_language = I18nData.countries(in_locale)[country_code] if country_code
+
+      if language_name_in_current_language
+        return "#{language_name_in_current_language} (#{country_name_in_current_language})" if country_name_in_current_language
+
+        return language_name_in_current_language
+      end
+    end
+
     native_name || english_name
   end
+  memo_wise :best_name
 
   # Returns the matching locales for the passed locale code, with locales with UI available first.
   def self.matching_locales(locale_code, chinese_only: false)
@@ -36,13 +74,14 @@ class Locale < ApplicationRecord
     locale_scope = locale_scope.where("code LIKE 'zh%'") if chinese_only
 
     # The dashed one is last alphabetically but first in our hearts.
-    locales = locale_scope.where(code: locale_codes_to_look_up).order(ui_available: :asc, code: :desc).load
-    return locales if locales.any?
+    locales = locale_scope.where(code: locale_codes_to_look_up).order(code: :desc).load
+    return [locales.partition(&:ui_available?)].flatten if locales.any?
 
     # Special case for Chinese locales that are more similar to zh-TW than zh-CN.
     return locale_scope.where(code: 'zh-TW') if %w[zh-HK zh-MO].include?(locale_code)
 
-    return locale_scope.where('code like ?', "#{language_part_only}-%").order(:ui_available, :code)
+    locales = locale_scope.where('code like ?', "#{language_part_only}-%").order(:code)
+    [locales.partition(&:ui_available?)].flatten
   end
 
   def scripts?(script_subset)
@@ -63,6 +102,26 @@ class Locale < ApplicationRecord
   end
 
   def self.fetch_locale(code)
+    # This should be loaded by locale_cache.rb, but in CI, that runs before the test database is set up.
+    load_locale_cache if @locale_cache.empty?
     @locale_cache[code.to_s]
+  end
+
+  def self.sort_by_name(locales, in_locale:)
+    in_locale = in_locale.code if in_locale.is_a?(Locale)
+    collator = ICU::Collation::Collator.new(in_locale)
+    locales.sort { |a, b| collator.compare(a.best_name(in_locale:), b.best_name(in_locale:)) }
+  end
+
+  def self.locales_used_by_scripts
+    Locale.where(id: LocalizedScriptAttribute.distinct(:locale_id).select(:locale_id))
+  end
+
+  def ui_available?
+    Rails.application.config.available_locales.include?(code)
+  end
+
+  def self.ui_available
+    where(code: Rails.application.config.available_locales)
   end
 end

@@ -3,7 +3,9 @@
 
 <section id="about-user" class="text-content reportable">
   <% if @ad_method&.ea? %>
-    <div id="user-show-ea" class="flat ethical-ads ethical-ads-text" data-ea-publisher="greasyfork" data-ea-type="text"></div>
+    <%= render(partial: 'shared/ea_text_ad', locals: {ad_method: @ad_method, ea_div_id: 'user-show-ea'}) %>
+  <% elsif @ad_method&.ga? %>
+    <%= render(partial: 'shared/ea_fallback', locals: { div_id: 'user-show-ad-fallback', ea_div_id: 'user-show-ea'})%>
   <% end %>
 
   <%= link_to(t('reports.report_user'), new_report_path(item_class: 'user', item_id: @user.id), class: 'report-link report-link-abs') unless @user.banned? %>
@@ -93,7 +95,8 @@
           <% end %>
           <%= link_to 'Unban', user_unban_path(@user) %>
         <% elsif @user.bannable? %>
-          <%= link_to 'Ban', user_ban_path(@user) %>
+          <%= link_to 'Ban', user_ban_path(@user) %> |
+          <%= link_to 'Ban as spammer', user_do_ban_path(@user, reason: Report::REASON_SPAM, delete_type: 'keep', delete_comments: 1), data: { turbo: true, turbo_method: :POST, turbo_confirm: "Ban '#{@user.name}' as a spammer, deleting all scripts and comments?" } %>
         <% end %>
       </p>
       <p>
@@ -253,7 +256,7 @@
         </ol>
       <% end %>
 
-      <%= will_paginate @scripts %>
+      <%= render_pagination %>
     </section>
 
     <% unless @unlisted_scripts.empty? %>

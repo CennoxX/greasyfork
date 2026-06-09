@@ -44,6 +44,8 @@ class Script < ApplicationRecord
   has_many :subresources, through: :subresource_usages
   has_many :notifications, inverse_of: :item, dependent: :destroy
   has_many :stat_bans, dependent: :destroy
+  has_many :library_usages, dependent: :destroy
+  has_many :library_usages_as_library, class_name: 'LibraryUsage', foreign_key: :library_script_id, inverse_of: :library_script, dependent: :destroy
 
   has_one :cleaned_code, dependent: :delete
 
@@ -449,7 +451,7 @@ class Script < ApplicationRecord
   end
 
   def self.record_install(id, ip)
-    Script.connection.execute("INSERT IGNORE INTO daily_install_counts (script_id, ip) VALUES (#{Script.connection.quote_string(id)}, '#{Script.connection.quote_string(ip)}');")
+    Script.connection.execute("INSERT IGNORE INTO daily_install_counts (script_id, ip) VALUES (#{Script.connection.quote(id)}, '#{Script.connection.quote_string(ip)}');")
   end
 
   def active?
@@ -536,8 +538,6 @@ class Script < ApplicationRecord
 
   def update_host(sleazy: false, cn_greasy: false)
     return Rails.env.production? ? 'update.sleazyfork.org' : 'update.sleazyfork.local:3000' if sleazy && sensitive
-
-    return Rails.env.production? ? 'update.cn-greasyfork.org' : 'update.cn-greasyfork.local:3000' if cn_greasy
 
     Rails.env.production? ? 'update.greasyfork.org' : 'update.greasyfork.local:3000'
   end
@@ -783,7 +783,7 @@ class Script < ApplicationRecord
       locale_code = n.split(':', 2).last
       meta_locale = localized_meta_keys_locales[locale_code]
       if meta_locale.nil?
-        Rails.logger.error "Unknown locale code - #{locale_code}"
+        Rails.logger.warn "Unknown locale code - #{locale_code}"
         next
       end
 

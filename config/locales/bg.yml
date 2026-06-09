@@ -38,9 +38,10 @@ bg:
     downgrade: "Върнете версия %{version}"
     reinstall: "Преинсталирайте %{version}"
     old_version_warning: "Това не е последната версия на този скрипт. Ако я инсталирате, тя никога няма да бъде обновена до по-нова версия. Инсталиране въпреки това?"
-    promoted: "Рекламиран скрипт"
-    author_promoted: "Препоръчано от автора"
-    promoted_text_html: "Може да харесате и %{script_link}."
+    post_install:
+      info_html: "%{script} вече би трябвало да е инсталиран. Ако сте срещнали проблеми при инсталацията, %{help_link:прочетете помощната документация}. Вашите отзиви са важни, за да поддържаме качеството на скриптовете на %{site_name}. След като пробвате %{script}, моля %{feedback_link:оставете отзив}."
+      promoted_script_intro: "Можете да харесате и..."
+      similar_script_html: "%{name} - %{description}"
     library_instructions_html: "Този скрипт не може да бъде инсталиран директно. Това е библиотека за други скриптове и може да бъде използвана с мета-директива %{code}"
     deleted_notice: "Този скрипт беше изтрит."
     deleted_notice_with_reason: "Този скрипт е изтрит заради %{report_link:този доклад}."
@@ -139,6 +140,8 @@ bg:
       month: Последните 30 дни
       year: Последните 365 дни
       all: Цялото време
+    stats_library_usages_intro_html: "Скриптовете, които използват тази библиотека от %{site_name} чрез <code>@require</code> са:"
+    stats_library_usages_script_column: Скрипт
     derivatives_title: "%{script_name} - Производни"
     derivatives_intro: "Тези скриптове може да са базирани на вашия (или вашите може да са базирани на тях). Ако намерите не оторизирана употреба на ваш код, докладвайте го чрез обратната връзка за скрипта."
     derivatives_script_html: "%{script} от %{user}, лиценз: %{license} %{diff_link:[Diff]}"
@@ -178,6 +181,7 @@ bg:
     listing_sort_created: "Дата на създаване"
     listing_sort_updated: "Дата на обновяване"
     listing_sort_name: "Име"
+    listing_sort_entry_locales: 'Езици'
     listing_filter_by_site_label: "Показване на скриптове за:"
     listing_filter_by_site_disable: "Всички"
     listing_filter_by_site_all_sites: "(Всички сайтове)"
@@ -198,6 +202,10 @@ bg:
       me: Моите скриптове
       user: Скриптове от %{author_name}
     search_failed: Нещо се обърка докато зареждахме резултатите. Някаква фунционалност на търсенето може да не работи. Известени сме за проблема.
+    listing_ratings_explanation: Вероятността следващото ревю да бъде с добра оценка, стойност между 0 и 1.
+    listing_locale_explanation: Скрипът е достъпен за всички избрани езици
+    listing_advanced_search_applied: "Приложено разширено търсене"
+    listing_advanced_search_clear: "Изчисти"
     import: "Импортиране на скриптове"
     new: "Публикувай написан от теб скрипт"
     new_css: "Публикувай създаден от теб стил"
@@ -228,7 +236,7 @@ bg:
     post_new_script: "Публикуване на скрипт"
     post_updated_script: "Публикуване на нова версия"
     type_1_html: "Публичен скрипт - скрипт, който всички могат да видят и използват."
-    type_2_html: "Скрипт извън списъка - скрипт, за (полу-)частна употреба. Достъпен чрез директна връзка, но не се показва никъде на %{site_name}."
+    type_2_html: "Скрипт извън списъка - скрипт, към който няма никаква връзка на %{site_name}. За скриптове, които са в процес на разработка или такива, които не биха били полезни за други потребители. Може да бъде достъпен за всеки, който знае пътя /URL/ към него."
     type_3_html: "Библиотека - скрипт, чието предназначение е да бъде <code>@require</code> от други скриптове, а не директна инсталация."
     override_warning_checkbox_label: "Запис въпреки това"
     warning_version_not_incremented_html: "Обновихте кода, но не увеличихте <code>@version</code> номера. Тези, които преди това са инсталирали скрипта, може да не получат обновения код."
@@ -373,7 +381,7 @@ bg:
     install_help_dialog:
       js:
         firefox: За да инсталирате този скрипт, трябва да имате инсталирано разширение като %{tampermonkey_link:Tampermonkey}, %{greasemonkey_link:Greasemonkey} или %{violentmonkey_link:Violentmonkey}.
-        chrome: За да инсталирате този скрипт, трябва да имате инсталирано разширение като  %{tampermonkey_link:Tampermonkey} или %{violentmonkey_link:Violentmonkey}.
+        chrome: За да инсталирате този скрипт, трябва да инсталирате разширение, като например %{tampermonkey_link:Tampermonkey} .
         opera: За да инсталирате този скрипт, трябва да имате инсталирано разширение като  %{tampermonkey_link:Tampermonkey} или %{violentmonkey_link:Violentmonkey}.
         safari: За да инсталирате този скрипт, трябва да имате инсталирано разширение като  %{tampermonkey_link:Tampermonkey} или %{userscripts_link:Userscripts}.
         edge: За да инсталирате скрипта, трябва да инсталирате разширение като %{tampermonkey_link:Tampermonkey}.
@@ -518,10 +526,10 @@ bg:
       title: Десктоп (настолен)
       browser_list_html: |
           <ul>
-          <li>Chrome: %{chrome_tampermonkey_link:Tampermonkey} или %{chrome_violentmonkey_link:Violentmonkey}</li>
+          <li>Chrome: %{chrome_tampermonkey_link:Tampermonkey}</li>
           <li>Firefox: %{firefox_greasemonkey_link:Greasemonkey}, %{firefox_tampermonkey_link:Tampermonkey}, или %{firefox_violentmonkey_link:Violentmonkey}</li>
           <li>Safari: %{safari_tampermonkey_link:Tampermonkey} или %{safari_userscripts_link:Userscripts}</li>
-          <li>Microsoft Edge: %{edge_tampermonkey_link:Tampermonkey} или %{edge_violentmonkey_link:Violentmonkey}</li>
+          <li>Microsoft Edge: %{edge_tampermonkey_link:Tampermonkey}</li>
           <li>Opera: %{opera_tampermonkey_link:Tampermonkey} или %{opera_violentmonkey_link:Violentmonkey}</li>
           <li>Maxthon: %{maxthon_violentmonkey_link:Violentmonkey}</li>
           <li>%{adguard_link:AdGuard}: (не е нужен допълнителен софтуер)</li>
@@ -969,8 +977,11 @@ bg:
       developers_credit: "%{site_name} е създаден от %{developers_link:тези автори} с помощта на всички, които докладват бъгове и препоръчват подобрения."
       translators_credit: "%{site_name} беше преведен с помощта на %{translators_link:the Greasy Translation Force не Transifex}:"
       icons_credit: "Иконите за браузъра са от %{browserlogos}."
+      donors_credit: "%{site_name} финансово е подкрепен от %{donor_links}. Ако желаеш да ни подкрепиш финансово, %{admin_email_link:свържи се с нас}."
+      ip_credit: "IP геолокация чрез DB-IP"
     help_with_greasymonkey: "Помощ за Greasemonkey"
     help_with_tampermonkey: "Помощ за Tampermonkey"
+    help_with_violentmonkey: "Помощ за Violentmonkey"
     contact:
       title: "Свържете се с някого"
       content_html: >
@@ -1373,6 +1384,7 @@ bg:
     edit_message_header: Промени съобщението
     update_message_submit: Обнови съобщението
     moderator_notice: Ако желаете да докладвате нарушаване на правилата на %{site_name}, използвайте връзката Доклад на съответния скрипт, потребител или коментар. Модераторите не могат да премахват съдържание, изпратено в лични съобщения.
+    rate_limited: Достигнахте ограничението колко дискусии можете да започнете. По-късно опитайте отново.
   screenshots:
     requirements: "Не повече от %{number} PNG, GIF, JPEG, или WebP изображения, по-малки от %{size} всяко."
   moderator_actions:
@@ -1509,6 +1521,8 @@ bg:
       needs_description: "Следните скриптове се нуждаят от намеса, за да бъдат импортирани:"
       existing: "Следните скриптове вече бяха успешно импортирани:"
       failure: "Следните скриптове не могат да бъдат импортирани:"
+      notuserscript: "Следните скриптове не могат да бъдат импортирани. Ако това са JS библиотеки, които не са предназначени за директна инсталация, последвайте връзката, за да ги добавите като такива."
+      addlibrary: "Добави като библиотека"
   mailers:
     script_report:
       report_created_offender:

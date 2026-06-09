@@ -1,9 +1,9 @@
 require 'sanitize'
 require 'redcarpet'
-require 'memoist'
+require 'memo_wise'
 
 module UserTextHelper
-  extend Memoist
+  prepend MemoWise
 
   def with_user_text_preview(markup_name:, markup:, &)
     markup_choice_html = label_tag(nil, class: 'radio-label') do
@@ -31,8 +31,7 @@ module UserTextHelper
     return '' if text.nil?
     return text if markup_type == 'text'
 
-    sanitize_config = sanitize_config_for_display(markup_type).dup
-    add_mention_transformer(sanitize_config, mentions) if mentions.any?
+    sanitize_config = sanitize_config_for_display(markup_type, mentions:)
 
     if markup_type == 'markdown'
       text = markdown.render(text)
@@ -139,14 +138,6 @@ module UserTextHelper
     config[:transformers] << detect_user_references
   end
 
-  def sanitize_config_for_display(markup_type)
-    return html_sanitize_config if markup_type == 'html'
-    return markdown_sanitize_config if markup_type == 'markdown'
-
-    raise "Unknown markup_type #{markup_type}."
-  end
-  memoize :sanitize_config_for_display
-
   def html_sanitize_config
     hsc = markdown_sanitize_config.dup
     fix_whitespace = lambda do |env|
@@ -167,7 +158,7 @@ module UserTextHelper
 
       # Looking for top-level text or non-block elements.
       return unless node.text? || (node.element? & !element_is_block(node))
-      return unless node.parent.fragment?
+      return unless node.parent&.fragment?
 
       paragraph = Nokogiri::XML::Node.new('p', node.document)
       node.before(paragraph)
@@ -189,7 +180,7 @@ module UserTextHelper
     msc = Sanitize::Config::BASIC.dup
     msc[:elements] = msc[:elements].dup
     msc[:elements].push('h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'img', 'hr', 'del', 'ins', 'table', 'tr', 'th', 'td', 'thead', 'tbody', 'tfoot', 'span', 'div', 'tt', 'center', 'ruby', 'rt', 'rp', 'video', 'details', 'summary')
-    msc[:attributes] = msc[:attributes].merge('img' => %w[src alt height width], 'video' => %w[src poster height width], 'details' => ['open'], :all => %w[title name style])
+    msc[:attributes] = msc[:attributes].merge('img' => %w[src alt height width], 'video' => %w[src poster height width], 'details' => ['open'], 'a' => %w[href name], :all => %w[title style])
     msc[:css] = { properties: %w[border background-color color] }
     msc[:protocols] = msc[:protocols].merge('img' => { 'src' => ['https'] }, 'video' => { 'src' => ['https'] })
     msc[:remove_contents] = %w[script style]
@@ -292,7 +283,19 @@ module UserTextHelper
       { node_allowlist: [node] }
     end
 
-    msc[:transformers] = [linkify_urls, yes_follow, youtube_transformer]
+    proxy_image_transformer = lambda do |env|
+      node = env[:node]
+      return unless node.element? && node.name == 'img'
+
+      proxied_url = ProxiedImage.proxied_url_for_url(node['src'])
+      if proxied_url
+        node['src'] = proxied_url
+      else
+        node.remove
+      end
+    end
+
+    msc[:transformers] = [linkify_urls, yes_follow, youtube_transformer, proxy_image_transformer]
 
     msc
   end
@@ -370,4 +373,28 @@ module UserTextHelper
       </div>
     HTML
   end
+
+  module_function
+
+  def sanitize_config_for_display(markup_type, mentions: [])
+    config = case markup_type
+             when 'html'
+               html_sanitize_config
+             when 'markdown'
+               markdown_sanitize_config
+             else
+               raise "Unknown markup_type #{markup_type}."
+             end
+
+    # Create a closure around the mentions transformer including the actual mentions, as there's no other way to get that data
+    # inside sanitize's transformer system. If there are no mentions, avoid doing this, as the transformer will be a no-op, and
+    # we can avoid the #dup.
+    if mentions.any?
+      config = config.dup
+      add_mention_transformer(config, mentions)
+    end
+
+    config
+  end
+  memo_wise self: :sanitize_config_for_display
 end

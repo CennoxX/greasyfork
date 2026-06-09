@@ -20,6 +20,10 @@ class DiscussionsController < ApplicationController
   layout 'discussions', only: :index
   layout 'application', only: [:new, :create]
 
+  DISCUSSION_SORT_COMMENT_CREATED = 'comment_created'.freeze
+  DISCUSSION_SORT_DISCUSSION_CREATED = 'discussion_created'.freeze
+  DISCUSSION_SORT_LAST_COMMENT = 'discussion_last_comment'.freeze
+
   def index
     respond_to do |format|
       format.html do
@@ -60,20 +64,20 @@ class DiscussionsController < ApplicationController
             end
 
             param_to_search_option = {
-              'comment_created' => { created: :desc },
-              'discussion_created' => { discussion_created: :desc },
-              'last_comment' => { discussion_last_reply: :desc },
+              DISCUSSION_SORT_COMMENT_CREATED => { created: :desc },
+              DISCUSSION_SORT_DISCUSSION_CREATED => { discussion_created: :desc },
+              DISCUSSION_SORT_LAST_COMMENT => { discussion_last_reply: :desc },
             }
             order = param_to_search_option[params[:sort]]
 
-            @comments = Comment.search(
-              params[:q].presence || '*',
-              fields: ['discussion_title^2', 'text'],
-              where: with,
-              order:,
-              page: page_number,
-              per_page: per_page(default: 25)
-            )
+            @comments = apply_searchkick_pagination(Comment.search(
+                                                      params[:q].presence || '*',
+                                                      fields: ['discussion_title^2', 'text'],
+                                                      where: with,
+                                                      order:,
+                                                      page: page_number,
+                                                      per_page: per_page(default: 25)
+                                                    ))
             @comments_to_discussions = @comments.map { |c| [c, c.discussion] }
             @discussions = @comments_to_discussions.map(&:last)
             @filter_result = FILTER_RESULT.new(category: params[:category], related_to_me: params[:me], locale:)
@@ -82,7 +86,7 @@ class DiscussionsController < ApplicationController
           else
 
             order = case params[:sort]
-                    when 'discussion_created' then { id: :desc }
+                    when DISCUSSION_SORT_DISCUSSION_CREATED then { id: :desc }
                     else { stat_last_reply_date: :desc }
                     end
 
@@ -108,7 +112,7 @@ class DiscussionsController < ApplicationController
             end
 
             @discussions = @filter_result.result
-            @discussions = @discussions.paginate(page: page_number, per_page: per_page(default: 25))
+            @discussions = apply_pagination(@discussions, default_per_page: 25)
             @bots = 'noindex' unless page_number == 1
           end
 
@@ -170,7 +174,7 @@ class DiscussionsController < ApplicationController
   def new
     @discussion = Discussion.new(poster: current_user)
     if current_user&.moderator? && params[:report_id]
-      report = Report.find(params[:report_id])
+      report = Report.find(params.expect(:report_id))
       @discussion.report = report
       users_to_mention = case report.item
                          when User
@@ -239,7 +243,7 @@ class DiscussionsController < ApplicationController
   end
 
   def destroy
-    discussion = discussion_scope.find(params[:id])
+    discussion = discussion_scope.find(params.expect(:id))
     normally_deletable = discussion.deletable_by?(current_user)
     unless normally_deletable || current_user&.moderator?
       render_access_denied
@@ -257,7 +261,7 @@ class DiscussionsController < ApplicationController
   end
 
   def subscribe
-    discussion = discussion_scope.find(params[:id])
+    discussion = discussion_scope.find(params.expect(:id))
     DiscussionSubscription.find_or_create_by!(user: current_user, discussion:)
     respond_to do |format|
       format.js { head :ok }
@@ -266,7 +270,7 @@ class DiscussionsController < ApplicationController
   end
 
   def unsubscribe
-    discussion = discussion_scope.find(params[:id])
+    discussion = discussion_scope.find(params.expect(:id))
     DiscussionSubscription.find_by(user: current_user, discussion:)&.destroy
     respond_to do |format|
       format.js { head :ok }
@@ -275,7 +279,7 @@ class DiscussionsController < ApplicationController
   end
 
   def old_redirect
-    redirect_to Discussion.find_by!(migrated_from: params[:id]).path(locale: detect_locale_code), status: :moved_permanently
+    redirect_to Discussion.find_by!(migrated_from: params.expect(:id)).path(locale: detect_locale_code), status: :moved_permanently
   end
 
   def mark_all_read
@@ -300,7 +304,7 @@ class DiscussionsController < ApplicationController
 
   def discussion_scope(permissive: false)
     scope = if params[:script_id]
-              @script = Script.find(params[:script_id])
+              @script = Script.find(params.expect(:script_id))
               @script.discussions
             else
               Discussion
@@ -401,7 +405,7 @@ class DiscussionsController < ApplicationController
 
   def load_discussion
     # Allow mods and the poster to see discussions under review.
-    @discussion = discussion_scope(permissive: true).find(params[:id])
+    @discussion = discussion_scope(permissive: true).find(params.expect(:id))
   end
 
   def mark_notifications_read

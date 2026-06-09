@@ -1,6 +1,7 @@
 class ApplicationController < ActionController::Base
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :set_active_storage_url_options, if: -> { Rails.env.test? }
+  before_action :redirect_from_cn_domain
 
   include ApplicationHelper
   include ShowsAds
@@ -11,6 +12,7 @@ class ApplicationController < ActionController::Base
   include BannedUser
   include Api
   include SiteSwitches
+  include Pagination
 
   if Rails.env.test?
     show_announcement key: :test_announcement,
@@ -37,17 +39,6 @@ class ApplicationController < ActionController::Base
     head :not_acceptable, content_type: 'text/plain'
   end
 
-  def self.cache_with_log(key, options = {})
-    options[:version] = key.cache_version if key.respond_to?(:cache_version)
-    key = "#{options.delete(:namespace)}/#{key.respond_to?(:cache_key) ? key.cache_key : key.to_s}" if options[:namespace]
-    Rails.cache.fetch(key, options) do
-      Rails.logger.warn("Cache miss - #{key} - #{options}") if Greasyfork::Application.config.log_cache_misses
-      o = yield
-      Rails.logger.warn("Cache stored - #{key} - #{options}") if Greasyfork::Application.config.log_cache_misses
-      next o
-    end
-  end
-
   protected
 
   def configure_permitted_parameters
@@ -59,7 +50,7 @@ class ApplicationController < ActionController::Base
   def authorize_by_script_id
     return if params[:script_id].blank?
 
-    render_access_denied unless current_user && Script.find(params[:script_id]).users.include?(current_user)
+    render_access_denied unless current_user && Script.find(params.expect(:script_id)).users.include?(current_user)
   end
 
   def authorize_for_moderators_only
@@ -146,61 +137,14 @@ class ApplicationController < ActionController::Base
     script.localized_attributes.build({ attribute_key: 'additional_info', attribute_default: true, value_markup: default_markup }) unless script.localized_attributes_for('additional_info').any?(&:attribute_default)
   end
 
-  def per_page(default: 50)
-    return default unless params[:per_page].is_a?(String)
-
-    pp = default
-    pp = [params[:per_page].to_i, 200].min if params[:per_page].to_i > 0
-    return pp
-  end
-
-  def page_number
-    return nil unless params[:page].is_a?(String)
-
-    page = params[:page].to_i
-    page = 1 if page.nil? || page < 1
-    page
-  end
-
   def cache_with_log(key, options = {}, &)
-    self.class.cache_with_log(key, options, &)
+    CachingService.cache_with_log(key, options, &)
   end
 
   helper_method :cache_with_log
 
   def get_script_from_input(value, allow_deleted: false, verify_existence: true)
-    allowed_hosts = ['https://greasyfork.org', 'https://sleazyfork.org', 'https://cn-greasyfork.org']
-    allowed_hosts += ['https://greasyfork.local', 'https://sleazyfork.local', 'https://cn-greasyfork.local'] unless Rails.env.production?
-
-    return nil if value.blank?
-
-    script_id = nil
-    # Is it an ID?
-    if value.to_i != 0
-      script_id = value.to_i
-    # A non-GF URL?
-    elsif allowed_hosts.none? { |host| value.start_with?(host) && !value.start_with?('/') }
-      return :non_gf_url
-    # A GF URL?
-    else
-      url_match = %r{/scripts/([0-9]+)(-|$)}.match(value)
-      return :non_script_url if url_match.nil?
-
-      script_id = url_match[1]
-    end
-
-    return script_id unless verify_existence
-
-    # Validate it's a good replacement
-    begin
-      script = Script.find(script_id)
-    rescue ActiveRecord::RecordNotFound
-      return :not_found
-    end
-
-    return :deleted if !allow_deleted && script.deleted?
-
-    return script
+    UrlToScriptService.to_script(value, allow_deleted:, verify_existence:)
   end
 
   def get_user_from_input(value)
@@ -274,5 +218,9 @@ class ApplicationController < ActionController::Base
 
       params[param_name] = pv
     end
+  end
+
+  def redirect_from_cn_domain
+    redirect_to request.params.merge(host: 'greasyfork.org', port: nil), status: :moved_permanently, allow_other_host: true if request.host == 'cn-greasyfork.org'
   end
 end

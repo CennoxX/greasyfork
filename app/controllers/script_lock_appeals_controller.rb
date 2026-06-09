@@ -9,6 +9,10 @@ class ScriptLockAppealsController < ApplicationController
   before_action :ensure_locked, only: [:new, :create]
   before_action :authorize_for_moderators_only, only: [:dismiss, :unlock]
 
+  before_action do
+    @bots = 'noindex,follow'
+  end
+
   def index
     @script_lock_appeals = ScriptLockAppeal.unresolved
   end
@@ -65,11 +69,11 @@ class ScriptLockAppealsController < ApplicationController
   protected
 
   def load_script
-    @script = Script.find(params[:script_id])
+    @script = Script.find(params.expect(:script_id))
   end
 
   def load_script_lock_appeal
-    @script_lock_appeal = @script.script_lock_appeals.find(params[:id])
+    @script_lock_appeal = @script.script_lock_appeals.find(params.expect(:id))
   end
 
   def ensure_locked

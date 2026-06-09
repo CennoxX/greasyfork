@@ -95,15 +95,14 @@ class CreateTest < ApplicationSystemTestCase
     user = User.first
     login_as(user, scope: :user)
     visit new_script_version_url
+    choose 'Library - a script intended to be @require-d from other scripts and not installed directly.'
+    fill_in 'Name', with: 'My library'
+    fill_in 'Description', with: 'My library description'
     code = <<~JS
       var foo = 1;
       var bar = 2;
     JS
     fill_in 'Code', with: code
-    choose 'Library - a script intended to be @require-d from other scripts and not installed directly.'
-    click_on 'Post script'
-    fill_in 'Name', with: 'My library'
-    fill_in 'Description', with: 'My library description'
     click_on 'Post script'
     assert_selector 'h2', text: 'My library'
     assert_includes(Script.last.users, user)
@@ -166,7 +165,7 @@ class CreateTest < ApplicationSystemTestCase
     fill_in 'Additional info', with: 'English additional info'
 
     click_on 'Add a localized additional info'
-    select 'Français (fr)', from: 'script_version[additional_info][1][locale]', match: :first
+    select 'French (fr)', from: 'script_version[additional_info][1][locale]', match: :first
     fill_in 'script_version[additional_info][1][attribute_value]', with: 'Additional info en francais'
 
     click_on 'Post script'

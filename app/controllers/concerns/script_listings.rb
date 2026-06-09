@@ -11,9 +11,10 @@ module ScriptListings
   ADVANCED_SEARCH_FIELDS = {
     total_installs: { type: :integer },
     daily_installs: { type: :integer },
-    ratings: { type: :float, index_name: :fan_score, min: 0, max: 1, info: 'The probability that the next review received will have a good rating, from 0 to 1.' },
+    ratings: { type: :float, index_name: :fan_score, min: 0, max: 1, info: 'scripts.listing_ratings_explanation' },
     created: { type: :datetime, index_name: :created_at },
     updated: { type: :datetime, index_name: :code_updated_at },
+    entry_locales: { type: :select, index_name: :locale_id, info: 'scripts.listing_locale_explanation' },
   }.freeze
 
   included do
@@ -55,7 +56,7 @@ module ScriptListings
 
           is_search = params[:q].present?
 
-          @set = ScriptSet.find(params[:set]) unless params[:set].nil?
+          @set = ScriptSet.find(params.expect(:set)) unless params[:set].nil?
           @by_sites = TopSitesService.get_top_by_sites(script_subset:, locale_id: @search_locale)
 
           @sort_options = %w[relevance daily_installs total_installs ratings created updated name] if is_search
@@ -110,12 +111,12 @@ module ScriptListings
     respond_to do |format|
       format.html do
         @by_sites = TopSitesService.get_by_sites(script_subset:)
-        @by_sites = @by_sites.select { |k, _v| k.present? && k.include?(params[:q].downcase) } if params[:q].present?
+        @by_sites = @by_sites.select { |k, _v| k.present? && k.include?(params.expect(:q).downcase) } if params[:q].present?
         @by_sites = @by_sites.max_by(200) { |_k, v| v[:installs] }.sort_by { |k, _v| k || '' }.to_h
         render layout: 'application'
       end
       format.json do
-        result = self.class.cache_with_log('applies_to_counts', expires_in: 1.hour) do
+        result = cache_with_log('applies_to_counts', expires_in: 1.hour) do
           ScriptAppliesTo.joins(:script, :site_application).where(scripts: { script_type: :public, delete_type: nil }, tld_extra: false).where.not(site_applications: { domain_text: nil }).group('site_applications.domain_text').count
         end
         cache_request(result.to_json)
@@ -140,15 +141,15 @@ module ScriptListings
     with[:script_type] = Script.script_types[:library]
     with[:author_ids] = params[:by] unless params[:by].to_i.zero?
 
-    @scripts = Script.search(
-      params[:q].presence || '*',
-      fields: ['name^10', 'description^5', 'author^5', 'additional_info^1'],
-      where: with,
-      order: self.class.get_es_sort(params, default_sort: params[:q].present? ? 'relevance' : 'created'),
-      page: page_number,
-      per_page: per_page(default: 100),
-      includes: [:localized_attributes, :users]
-    )
+    @scripts = apply_searchkick_pagination(Script.search(
+                                             params[:q].presence || '*',
+                                             fields: ['name^10', 'description^5', 'author^5', 'additional_info^1'],
+                                             where: with,
+                                             order: self.class.get_es_sort(params, default_sort: params[:q].present? ? 'relevance' : 'created'),
+                                             page: page_number,
+                                             per_page: per_page(default: 100),
+                                             includes: [:localized_attributes, :users]
+                                           ))
 
     respond_to do |format|
       format.html do
@@ -167,7 +168,7 @@ module ScriptListings
   end
 
   def reported_not_adult
-    @scripts = Script.reported_not_adult.paginate(page: params[:page], per_page:)
+    @scripts = apply_pagination(Script.reported_not_adult)
     render :index
   end
 
@@ -184,7 +185,7 @@ module ScriptListings
     @scripts = @scripts.where(language: (params[:language] == 'css') ? 'css' : 'js') unless params[:language] == 'all'
     include_deleted = current_user&.moderator? && params[:include_deleted] == '1'
     @scripts = @scripts.listable(script_subset) unless include_deleted
-    @scripts = @scripts.paginate(page: page_number, per_page:)
+    @scripts = apply_pagination(@scripts)
 
     respond_to do |format|
       format.html do
@@ -230,7 +231,7 @@ module ScriptListings
       end
       unless params[:set].nil?
         set = ScriptSet.find(params[:set])
-        set_script_ids = cache_with_log(set, namespace: script_subset) do
+        set_script_ids = CachingService.cache_with_log(set, namespace: script_subset) do
           set.scripts(script_subset).map(&:id)
         end
         scripts = scripts.where(id: set_script_ids)
@@ -320,7 +321,11 @@ module ScriptListings
   def load_scripts_for_index_with_es(for_json: false)
     with = es_options_for_request
 
-    with[:locale] = @search_locale if @search_locale
+    if params[:entry_locales].present?
+      with[:locale] = params[:entry_locales].map(&:to_i)
+    elsif @search_locale
+      with[:locale] = @search_locale
+    end
 
     if params[:site]
       if params[:site] == '*'
@@ -329,7 +334,7 @@ module ScriptListings
         site = SiteApplication.find_by(domain_text: params[:site])
 
         if site.nil?
-          @scripts = Script.none.paginate(page: 1)
+          @scripts = apply_pagination(Script.none)
           return false
         end
 
@@ -356,23 +361,29 @@ module ScriptListings
     includes = [:localized_attributes, :users]
     includes.push(:locale, :license) if for_json
 
-    @scripts = Script.search(
-      params[:q].presence || '*',
-      fields: ['name^10', 'search_site_names^9', 'description^5', 'author^5', 'additional_info^1'],
-      boost_by: [:fan_score],
-      where: with,
-      order: self.class.get_es_sort(params),
-      page: page_number,
-      per_page: per_page(default: 100),
-      includes:
-    )
+    @scripts = apply_searchkick_pagination(Script.search(
+                                             params[:q].presence || '*',
+                                             fields: ['name^10', 'search_site_names^9', 'description^5', 'author^5', 'additional_info^1'],
+                                             boost_by: [:fan_score],
+                                             where: with,
+                                             order: self.class.get_es_sort(params),
+                                             page: page_number,
+                                             per_page: per_page(default: 100),
+                                             includes:
+                                           ))
 
     false
   end
 
   def load_scripts_for_index_without_es
     if params[:set]
-      set = ScriptSet.find(params[:set])
+      set = ScriptSet.find(params.expect(:set))
+
+      unless current_user
+        render_error(:forbidden, 'Script sets only available to logged in users.')
+        return true
+      end
+
       if !current_user&.moderator? && set.user&.banned?
         redirect_to scripts_path(locale: request_locale.code), status: :moved_permanently
         return true
@@ -382,8 +393,9 @@ module ScriptListings
     @scripts = Script
                .listable(script_subset)
                .includes({ users: {}, localized_attributes: :locale })
-               .paginate(page: page_number, per_page:)
     @scripts = self.class.apply_filters(@scripts, params, script_subset)
+    @scripts = apply_pagination(@scripts)
+
     # Force a load as will be doing empty?, size, etc. and don't want separate queries for each.
     @scripts = @scripts.load
 
@@ -412,9 +424,9 @@ module ScriptListings
         case params["#{field}_operator"]
         when 'eq'
           with[es_field_name] = field_value
-        when 'lte'
+        when 'lt'
           with[es_field_name] = ..field_value
-        when 'gte'
+        when 'gt'
           with[es_field_name] = field_value..
         else
           # Ignore any other operator
@@ -424,34 +436,40 @@ module ScriptListings
         case params["#{field}_operator"]
         when 'eq'
           with[es_field_name] = field_value
-        when 'lte'
+        when 'lt'
           with[es_field_name] = ..field_value
-        when 'gte'
+        when 'gt'
           with[es_field_name] = field_value..
         else
           # Ignore any other operator
         end
       when :datetime
         time_zone ||= begin
-          ActiveSupport::TimeZone[params[:tz]] || Time.zone
+          (ActiveSupport::TimeZone[params[:tz]] if params[:tz].is_a?(String)) || Time.zone
         rescue TZInfo::InvalidTimezoneIdentifier
           Time.zone
         end
         field_value = begin
           time_zone.parse(params[field])
-        rescue Date::Error
+        rescue ArgumentError
           nil
         end
         next unless field_value
 
+        # Eliminate stupid values to prevent them causing exceptions in elasticsearch
+        next if (field_value - Time.zone.now).abs > 100.years
+
         case params["#{field}_operator"]
-        when 'lte'
+        when 'lt'
           with[es_field_name] = ..field_value
-        when 'gte'
+        when 'gt'
           with[es_field_name] = field_value..
         else
           # Ignore any other operator
         end
+      when :select
+        # entry_locales handled elsewhere
+        raise "Unknown advanced search field select type: #{field}" unless field == :entry_locales
       else
         raise "Unknown advanced search field type: #{field_type}"
       end

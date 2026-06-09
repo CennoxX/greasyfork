@@ -15,11 +15,11 @@ class ConversationsController < ApplicationController
       render_404('You can only view your own conversations.')
       return
     end
-    @conversations = current_user.conversations.includes(:users, :stat_last_poster).order(stat_last_message_date: :desc).paginate(page: params[:page])
+    @conversations = apply_pagination(current_user.conversations.includes(:users, :stat_last_poster).order(stat_last_message_date: :desc))
   end
 
   def show
-    @messages = @conversation.messages.includes(:poster).paginate(page: params[:page], per_page:)
+    @messages = apply_pagination(@conversation.messages.includes(:poster))
     @message = @conversation.messages.build(poster: current_user, content_markup: current_user&.preferred_markup)
     @subscribe = current_user.subscribed_to_conversation?(@conversation)
     @show_moderator_notice = self.class.show_moderator_notice?(current_user, @conversation.users)
@@ -35,6 +35,7 @@ class ConversationsController < ApplicationController
 
   def create
     @conversation = Conversation.new(conversation_params)
+    @conversation.starting_user = current_user
 
     other_user = get_user_from_input(@conversation.user_input)
     if other_user.nil? || other_user == current_user
@@ -50,6 +51,11 @@ class ConversationsController < ApplicationController
       @conversation = previous_conversation
     else
       @conversation.users = [current_user, other_user]
+
+      if UserRestrictionService.new(current_user).conversation_restriction == UserRestrictionService::BLOCKED
+        render 'blocked'
+        return
+      end
     end
     @subscribe = params[:subscribe] == '1'
 
@@ -93,7 +99,7 @@ class ConversationsController < ApplicationController
   private
 
   def find_user
-    @user = User.find(params[:user_id])
+    @user = User.find(params.expect(:user_id))
   end
 
   def ensure_user_current
@@ -101,7 +107,7 @@ class ConversationsController < ApplicationController
   end
 
   def find_conversation
-    @conversation = @user.conversations.find(params[:id])
+    @conversation = @user.conversations.find(params.expect(:id))
     return if @user == current_user || (Report.unresolved.where(item: @conversation.messages).any? && current_user&.moderator?) || current_user&.administrator?
 
     render_404('You can only view your own conversations.')

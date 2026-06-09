@@ -1,7 +1,15 @@
-require 'memoist'
+require 'memo_wise'
 
 module ScriptsHelper
-  extend Memoist
+  prepend MemoWise
+
+  def script_tab_link(path, label, additional_current_check: false)
+    label = "<span>#{h label}</span>".html_safe
+
+    return "<li class=\"current\">#{label}</li>".html_safe if current_page?(path) || additional_current_check
+
+    "<li>#{link_to(label, path, rel: (path.include?('version=') ? :nofollow : nil))}</li>".html_safe
+  end
 
   def script_list_link(label, sort: nil, site: nil, set: nil, default_sort: nil, language: nil, filter_locale: nil, rel: nil, by: nil)
     is_link = true
@@ -15,17 +23,17 @@ module ScriptsHelper
       l = label
       is_link = false
     elsif is_libraries
-      l = link_to(label, libraries_scripts_path(sort: sort_param_to_use, q: params[:q], set:, by:), rel:)
+      l = link_to(label, libraries_scripts_path(sort: sort_param_to_use, q: params[:q].presence, set:, by:), rel:)
     elsif is_minified
       l = link_to(label, minified_scripts_path(sort: sort_param_to_use), rel:)
     elsif is_code_search
       l = link_to(label, code_search_scripts_path(sort: sort_param_to_use, c: params[:c], language:, by:), rel:)
     elsif site.nil?
-      l = link_to(label, { sort: sort_param_to_use, site: nil, set:, q: params[:q], language:, filter_locale:, by: }, rel:)
+      l = link_to(label, { sort: sort_param_to_use, site: nil, set:, q: params[:q].presence, language:, filter_locale:, by:, **advanced_search_params }, rel:)
     elsif params[:controller] == 'users'
       l = link_to(label, { sort: sort_param_to_use, site:, set:, language:, filter_locale: }, rel:)
     else
-      l = link_to label, by_site_scripts_path(sort: sort_param_to_use, site:, set:, q: params[:q], language:, filter_locale:, by:), rel:
+      l = link_to label, by_site_scripts_path(sort: sort_param_to_use, site:, set:, q: params[:q].presence, language:, filter_locale:, by:, **advanced_search_params), rel:
     end
     tag.li(class: "list-option#{' list-current' unless is_link}") { l }
   end
@@ -58,13 +66,22 @@ module ScriptsHelper
   end
 
   def promoted_script(for_script)
-    return nil if sleazy?
-    return nil if for_script.sensitive
     return nil if current_user && !current_user.show_ads
+    return nil unless for_script.promoted_script
 
-    return for_script.promoted_script
+    if sleazy?
+      # Only promote sleazy scripts on sleazy
+      return for_script.promoted_script if for_script.promoted_script.sensitive
+
+      return nil
+    end
+
+    # Only promote greasy scripts on greasy
+    return for_script.promoted_script unless for_script.promoted_script.sensitive
+
+    return nil
   end
-  memoize :promoted_script
+  memo_wise :promoted_script
 
   def render_script(script, locale: nil, full_url: false, skip_link: false)
     name = script.name(locale || request_locale)
@@ -112,5 +129,46 @@ module ScriptsHelper
       reason += "\"#{script.delete_reason}\""
     end
     reason.html_safe
+  end
+
+  def search_comparator_field(field_name, include_equals: false)
+    field = field_name.to_s.parameterize
+    return tag.select(id: "search-#{field}-operator", name: "#{field}_operator") do
+      options = []
+      options << tag.option('>', value: 'gt', selected: params["#{field}_operator"] == 'gt')
+      options << tag.option('<', value: 'lt', selected: params["#{field}_operator"] == 'lt')
+      options << tag.option('=', value: 'eq', selected: params["#{field}_operator"] == 'eq') if include_equals
+      safe_join(options)
+    end
+  end
+
+  def advanced_search_params(exclude_blank: true)
+    rv = {}
+    ScriptListings::ADVANCED_SEARCH_FIELDS.each do |name, options|
+      next if exclude_blank && params[name].blank?
+
+      rv[name] = params[name]
+      operator_param = :"#{name}_operator"
+      rv[operator_param] = params[operator_param] if params[operator_param].present?
+      rv[:tz] ||= params[:tz] if options[:type] == :datetime && (!exclude_blank || params[:tz].present?)
+    end
+
+    rv
+  end
+
+  def advanced_search_applied?
+    advanced_search_params.any?
+  end
+
+  def regular_search_params
+    params.slice(:sort, :site, :q, :language, :filter_locale, :by).permit!
+  end
+
+  def all_search_params
+    regular_search_params.merge(advanced_search_params)
+  end
+
+  def current_script_listing_path(**args)
+    (params[:site].present? && /[a-z0-9\-.*]*?/i.match?(params[:site])) ? by_site_scripts_path(params[:site], **args) : scripts_path(**args)
   end
 end

@@ -1,7 +1,7 @@
 <%- title t('scripts.history_title', script_name: @script.name(request_locale)) %>
 <%- description "Version history for #{@script.name(request_locale)}" %>
 
-<%= render partial: 'shared/in_page_ad', locals: { ad_method: @ad_method, div_id: 'script-versions-list-ad', adsense_slot: '8369077042', ea_div_id: 'script-versions-list-ea-image'} %>
+<%= render partial: 'shared/in_page_ad', locals: { ad_method: @ad_method, div_id: 'script-versions-list-ad', adsense_slot: '8369077042', ea_div_id: 'script-versions-list-ea-image', fallback_ea: true} %>
 
 <%
 show_diff = @script.script_versions.length > 1
@@ -45,12 +45,10 @@ end %>
       <%= submit_tag t('scripts.diff_button'), name: nil %>
     </p>
   <% end %>
-  <% if !defined?(@paginate) || @paginate %>
-    <%= will_paginate(@script_versions, renderer: @bots == 'noindex' ? WillPaginate::ActionView::LinkRendererWithNoFollow : nil) %>
-    <% if @script_versions.total_pages > 1 %>
-      <p>
-        <%= link_to t('scripts.list_all_script_versions'), { list_all: 1 }, { rel: :nofollow } %>
-      </p>
-    <% end %>
+  <%= render_pagination %>
+  <% if multiple_pages? %>
+    <p>
+      <%= link_to t('scripts.list_all_script_versions'), { list_all: 1 }, { rel: :nofollow } %>
+    </p>
   <% end %>
 </form>

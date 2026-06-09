@@ -1,3 +1,5 @@
+require 'script_importer/script_syncer'
+
 class ScriptVersionsController < ApplicationController
   include ScriptAndVersions
   include UserTextHelper
@@ -11,9 +13,17 @@ class ScriptVersionsController < ApplicationController
   before_action :check_ip, only: :create
   before_action :handle_api_request, only: :index
 
+  skip_before_action :verify_authenticity_token, only: :prefill
+
   layout 'scripts', only: [:index]
 
   def index
+    # Using the version param here makes no sense.
+    if params[:version].present?
+      redirect_to current_path_with_params(version: nil)
+      return
+    end
+
     cachable_request = generally_cachable? && request.query_parameters.empty?
     page_key = "#{site_cache_key}/script/versions/#{params[:script_id]}/#{request_locale.id}" if cachable_request
 
@@ -35,7 +45,7 @@ class ScriptVersionsController < ApplicationController
       if params[:list_all] == '1'
         @paginate = false
       else
-        @script_versions = @script_versions.paginate(page: page_number, per_page:)
+        @script_versions = apply_pagination(@script_versions)
       end
 
       respond_to do |format|
@@ -66,7 +76,7 @@ class ScriptVersionsController < ApplicationController
   def new
     @bots = 'noindex'
 
-    if current_user.scripts.none? && session[:new_script_notice].nil?
+    if !@prefill && current_user.scripts.none? && session[:new_script_notice].nil?
       render 'new_script_notice'
       return
     end
@@ -74,16 +84,35 @@ class ScriptVersionsController < ApplicationController
     @script_version = ScriptVersion.new(changelog_markup: current_user.preferred_markup)
 
     if params[:script_id].nil?
-      @script = Script.new(script_type: :public, language: params[:language] || 'js')
+      @script = Script.new(script_type: params.dig('script', 'script_type')&.to_i || :public, language: params[:language] || 'js')
       @script.authors.build(user: current_user)
       @script_version.script = @script
+      if @prefill
+        if params['script_version'].is_a?(ActionController::Parameters)
+          # Externally open prefill URL used by script managers.
+          @script_version.code = params['script_version']['code']
+        elsif params['import_url']
+          # URL from the import process when users want to add it as a library
+          begin
+            @script_version.code = ScriptImporter::ScriptSyncer.choose_importer.download(params['import_url'])
+          rescue StandardError => e
+            raise e if Rails.env.local?
+
+            Rails.logger.warn(e)
+          else
+            @script.sync_identifier = params['import_url']
+            @script.sync_type = params['sync_type'] || 'manual'
+          end
+        end
+      end
       ensure_default_additional_info(@script_version, current_user.preferred_markup)
       @current_attachments = []
     else
-      @script = Script.find(params[:script_id])
+      @script = Script.find(params.expect(:script_id))
       @script_version.script = @script
       previous_script = @script.script_versions.last
-      @script_version.code = previous_script.code
+      @script_version.code = params['script_version']['code'] if @prefill && params['script_version'].is_a?(ActionController::Parameters)
+      @script_version.code ||= previous_script.code
       previous_script.localized_attributes.each { |la| @script_version.build_localized_attribute(la) }
       ensure_default_additional_info(@script_version, current_user.preferred_markup)
       @script_version.not_js_convertible_override = @script.not_js_convertible_override
@@ -116,7 +145,17 @@ class ScriptVersionsController < ApplicationController
       end
     end
 
-    render layout: 'scripts' unless @script.new_record?
+    # Need to specify the 'new' view because #prefill calls this method too.
+    if @script.new_record?
+      render 'new'
+    else
+      render 'new', layout: 'scripts'
+    end
+  end
+
+  def prefill
+    @prefill = true
+    new
   end
 
   def confirm_new_author
@@ -138,8 +177,13 @@ class ScriptVersionsController < ApplicationController
     if params[:script_id].nil?
       @script = Script.new(language: params[:language] || 'js')
       @script.authors.build(user: current_user)
+      if params['import_url']
+        @script.sync_identifier = params[:import_url]
+        @script.sync_type = params[:sync_type] || 'manual'
+        @script.last_attempted_sync_date = @script.last_successful_sync_date = DateTime.now
+      end
     else
-      @script = Script.find(params[:script_id])
+      @script = Script.find(params.expect(:script_id))
     end
 
     @script_version.script = @script
@@ -181,7 +225,7 @@ class ScriptVersionsController < ApplicationController
     end
 
     unless params[:code_upload].nil?
-      uploaded_content = params[:code_upload].read
+      uploaded_content = params.expect(:code_upload).read
       unless uploaded_content.force_encoding('UTF-8').valid_encoding?
         @script_version.script.errors.add(:code, I18n.t('errors.messages.script_update_not_utf8'))
 
@@ -274,7 +318,7 @@ class ScriptVersionsController < ApplicationController
   end
 
   def delete
-    @script_version = ScriptVersion.find(params[:script_version_id])
+    @script_version = ScriptVersion.find(params.expect(:script_version_id))
     @script = @script_version.script
     @bots = 'noindex'
   end

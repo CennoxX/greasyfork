@@ -42,9 +42,6 @@ ar:
     downgrade: "رجوع لنسخة %{version}"
     reinstall: "إعادة تثبيت نسخة %{version}"
     old_version_warning: "هذا البرنامج النصي ليس أحدث اصدار. إذا قمت بتثبيته ، فلن يتم تحديثه إلى إصدار أحدث. تثبيت على أي حال؟"
-    promoted: "برنامج نصي ترويجي"
-    author_promoted: "سكربت موصى به للمؤلف"
-    promoted_text_html: "ربما يعجبك أيضا %{script_link}."
     library_instructions_html: "لا ينبغي أن لا يتم تثبيت هذا السكريت مباشرة. هو مكتبة لسكبتات لتشمل مع التوجيه الفوقية %{code}"
     deleted_notice: "لقد تم حذف هذا البرنامج النصي."
     deleted_notice_with_reason: "تم حذف هذا البرنامج النصي بسبب %{report_link:this report}."
@@ -185,7 +182,6 @@ ar:
     post_new_script: "إضافة البرنامج النصي"
     post_updated_script: "إضافة إصدار جديد"
     type_1_html: "برنامج نصي عام - برنامج نصي يراه ويستخدمه الجميع."
-    type_2_html: "برنامج نصي غير مدرج - برنامج نصي (شبه) خاص.  متوفر للوصول المباشر، ولكن لا يوضع له أي رابط في أي مكان على %{site_name}."
     type_3_html: "المكتبة - برنامج نصي للإستخدام كـ <code>@require</code>-d من قبل البرامج النصية.الأخرى ولا يتم تثبيته مباشرة."
     warning_version_not_incremented_html: "أنت قمت بتحديث الكود لكن لم تقم بزيادة رقم الإصدار <code>@version</code>. هؤلاء الذين ثبتوا البرنامج النصي سابقا قد لا يحصلون على التحديث.."
     warning_namespace_changed_html: "<code>@namespace</code> الخاص بك تغير. <code>@namespace</code> ثابت سمح للمستخدمين بإعادة تثبيت برنامجك النصي لتحديثه."
@@ -408,14 +404,6 @@ ar:
         يمكنك استخدامه يعتمد على المتصفح الذي تستخدمه.
     desktop_browsers:
       title: سطح المكتب
-      browser_list_html: |
-          كروم: %{chrome_tampermonkey_link:Tampermonkey} أو %{chrome_violentmonkey_link:Violentmonkey}
-          فايرفوكس: %{firefox_greasemonkey_link:Greasemonkey}, %{firefox_tampermonkey_link:Tampermonkey}, أو %{firefox_violentmonkey_link:Violentmonkey}
-          سفاري: %{safari_tampermonkey_link:Tampermonkey} أو %{safari_userscripts_link:Userscripts}
-          مايكروسوفت إيدج: %{edge_tampermonkey_link:Tampermonkey} أو %{edge_violentmonkey_link:Violentmonkey}
-          أوبرا: %{opera_tampermonkey_link:Tampermonkey} أو %{opera_violentmonkey_link:Violentmonkey}
-          Maxthon: %{maxthon_violentmonkey_link:Violentmonkey}
-          %{adguard_link:AdGuard}: (لا حاجة لبرنامج إضافي)
     android_browsers:
       title: هاتف (أندرويد)
     ios_browsers:

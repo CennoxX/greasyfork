@@ -67,11 +67,10 @@ en:
     reinstall: "Reinstall version %{version}"
     # warning when installing an old version of a script
     old_version_warning: "This is not the latest version of this script. If you install it, you will never be updated to a newer version. Install anyway?"
-    # label for a promoted script
-    promoted: "Promoted script"
-    author_promoted: "Author's suggested script"
-    # text for promoted script
-    promoted_text_html: "You may also like %{script_link}."
+    post_install:
+      info_html: "You now should have %{script} installed. If you've had trouble installing, %{help_link:read our help docs}. Your feedback is important maintain the quality of scripts on %{site_name}. Once you've tried out %{script}, please consider %{feedback_link:leaving a review}."
+      promoted_script_intro: "You may also like…"
+      similar_script_html: "%{name} - %{description}"
     # instructions on a script library. code will be a <code> element. Don't use punctuation around the code element if possible so that people don't accidentally include that when copying.
     library_instructions_html: "This script should not be not be installed directly. It is a library for other scripts to include with the meta directive %{code}"
     # text displayed for deleted scripts
@@ -210,6 +209,8 @@ en:
       month: Last 30 days
       year: Last 365 days
       all: All time
+    stats_library_usages_intro_html: "The following scripts use this library's %{site_name} URL in a <code>@require</code>:"
+    stats_library_usages_script_column: Script
     # HTML title for derivatives page
     derivatives_title: "%{script_name} - Derivatives"
     # text explaining the derivatives page and what to do if the user finds unauthorized copies
@@ -269,6 +270,7 @@ en:
     listing_sort_updated: "Updated date"
     # link for name sort on a script list
     listing_sort_name: "Name"
+    listing_sort_entry_locales: 'Languages'
     # label for filtering by-site links on script list page
     listing_filter_by_site_label: "Showing scripts for:"
     # link for turning off by-site filtering on script list page
@@ -300,6 +302,10 @@ en:
       me: My scripts
       user: Scripts by %{author_name}
     search_failed: Something went wrong loading your results. Some search functionality may not be working. We've been notified of the issue.
+    listing_ratings_explanation: The probability that the next review received will have a good rating, from 0 to 1.
+    listing_locale_explanation: Script is available in any of the selected languages.
+    listing_advanced_search_applied: "Advanced search applied"
+    listing_advanced_search_clear: "Clear"
     # link to start the process of importing (creating from an external place) scripts
     import: "Import scripts"
     # link to create a new script
@@ -360,7 +366,7 @@ en:
     # label for radio button for public-type user script
     type_1_html: "Public user script - a user script for all to see and use."
     # label for radio button for unlisted-type user script
-    type_2_html: "Unlisted user script - a user script for (semi-)private use. Available by direct access, but not linked to from anywhere on %{site_name}."
+    type_2_html: "Unlisted user script - a user script not linked to from anywhere on %{site_name}. For scripts that are works in progress or those that would not be generally useful to others. Does not prevent others from accessing it if they know the URL."
     # label for radio button for library-type script
     type_3_html: "Library - a script intended to be <code>@require</code>-d from other scripts and not installed directly."
     # label for checkbox to override script save warnings
@@ -574,7 +580,7 @@ en:
     install_help_dialog:
       js:
         firefox: You will need to install an extension such as %{tampermonkey_link:Tampermonkey}, %{greasemonkey_link:Greasemonkey} or %{violentmonkey_link:Violentmonkey} to install this script.
-        chrome: You will need to install an extension such as %{tampermonkey_link:Tampermonkey} or %{violentmonkey_link:Violentmonkey} to install this script.
+        chrome: You will need to install an extension such as %{tampermonkey_link:Tampermonkey} to install this script.
         opera: You will need to install an extension such as %{tampermonkey_link:Tampermonkey} or %{violentmonkey_link:Violentmonkey} to install this script.
         safari: You will need to install an extension such as %{tampermonkey_link:Tampermonkey} or %{userscripts_link:Userscripts} to install this script.
         edge: You will need to install an extension such as %{tampermonkey_link:Tampermonkey} to install this script.
@@ -733,10 +739,10 @@ en:
       title: Desktop
       browser_list_html: |
         <ul>
-          <li>Chrome: %{chrome_tampermonkey_link:Tampermonkey} or %{chrome_violentmonkey_link:Violentmonkey}</li>
+          <li>Chrome: %{chrome_tampermonkey_link:Tampermonkey}</li>
           <li>Firefox: %{firefox_greasemonkey_link:Greasemonkey}, %{firefox_tampermonkey_link:Tampermonkey}, or %{firefox_violentmonkey_link:Violentmonkey}</li>
           <li>Safari: %{safari_tampermonkey_link:Tampermonkey} or %{safari_userscripts_link:Userscripts}</li>
-          <li>Microsoft Edge: %{edge_tampermonkey_link:Tampermonkey} or %{edge_violentmonkey_link:Violentmonkey}</li>
+          <li>Microsoft Edge: %{edge_tampermonkey_link:Tampermonkey}</li>
           <li>Opera: %{opera_tampermonkey_link:Tampermonkey} or %{opera_violentmonkey_link:Violentmonkey}</li>
           <li>Maxthon: %{maxthon_violentmonkey_link:Violentmonkey}</li>
           <li>%{adguard_link:AdGuard}: (no additional software required)</li>
@@ -759,6 +765,7 @@ en:
         <ul>
           <li>Safari: %{safari_tampermonkey_link:Tampermonkey} or %{safari_userscripts_link:Userscripts}</li>
           <li>%{gear_link:Gear}: (no additional software required)
+          <li>%{teak_link:Teak}: (no additional software required)
         </ul>
     # header for step 2 - how to install a user script
     installing_step2_header: "Step 2: install a user script"
@@ -1276,9 +1283,12 @@ en:
       translators_credit: "%{site_name} was translated by %{translators_link:the Greasy Translation Force on Transifex}:"
       # give credit to icon makers. all links are proper names so are not translated.
       icons_credit: "Browser icons are from %{browserlogos}."
+      donors_credit: "%{site_name} has been financially supported by %{donor_links}. If you would like to provide financial support, %{admin_email_link:get in touch}."
+      ip_credit: "IP Geolocation by DB-IP"
     # link to greasemonkey docs
     help_with_greasymonkey: "Help with Greasemonkey"
     help_with_tampermonkey: "Help with Tampermonkey"
+    help_with_violentmonkey: "Help with Violentmonkey"
     contact:
       # title of contact page
       title: "Contact someone"
@@ -1651,6 +1661,7 @@ en:
     edit_message_header: Edit message
     update_message_submit: Update message
     moderator_notice: If you want to report an infringement of %{site_name}'s rules, use the Report link on that script, user, or comment. Moderators cannot remove content based on reports through direct messages.
+    rate_limited: You've reached the limit for how many conversations you can start. Try again later.
   screenshots:
     requirements: "Maximum of %{number} PNG, GIF, JPEG, or WebP images, smaller than %{size} each."
   moderator_actions:
@@ -1828,6 +1839,8 @@ en:
       needs_description: "The following scripts need a description to be imported:"
       existing: "The following scripts had already been imported:"
       failure: "The following scripts could not be imported:"
+      notuserscript: "The following scripts could not be imported. If they are JS libraries not meant to be directly installed, you can click the link to add them as such."
+      addlibrary: "Add as library"
   mailers:
     script_report:
       report_created_offender:

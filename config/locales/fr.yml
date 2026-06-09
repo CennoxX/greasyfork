@@ -39,9 +39,10 @@ fr:
     downgrade: "Revenir à la version %{version}"
     reinstall: "Réinstaller la version %{version}"
     old_version_warning: "Ceci n'est pas la dernière version de ce script. Si vous l'installez, vous n'aurez jamais de mise à jour vers les nouvelles versions. Voulez-vous vraiment l'installer ?"
-    promoted: "Script promotionnel"
-    author_promoted: "Script suggéré par l'auteur"
-    promoted_text_html: "Vous pourriez également aimer %{script_link}."
+    post_install:
+      info_html: "Vous devriez maintenant avoir %{script} installé. Si vous rencontrez des difficultés lors de l'installation,  %{help_link:lisez nos documents d'aide}. Vos commentaires sont importants pour maintenir la qualité des scripts sur  %{site_name}. Une fois que vous aurez essayé  %{script}, pensez à %{feedback_link:laisser un avis}."
+      promoted_script_intro: "Vous aimerez peut-être aussi…"
+      similar_script_html: "%{name} - %{description}"
     library_instructions_html: "Ce script ne doit pas être installé directement. C'est une librairie destinée à être incluse dans d'autres scripts avec la méta-directive %{code}"
     deleted_notice: "Ce script a été supprimé."
     deleted_notice_with_reason: "Ce script a été supprimé en raison de %{report_link:ce rapport}."
@@ -141,6 +142,8 @@ fr:
       month: Moins de 30 jours
       year: Moins de 365 jours
       all: Tout le temps
+    stats_library_usages_intro_html: "Les scripts suivants utilisent l'URL %{site_name} de cette bibliothèque dans un <code>@require</code> :"
+    stats_library_usages_script_column: Script
     derivatives_title: "%{script_name} - Scripts similaires"
     derivatives_intro: "Ces scripts peuvent être basés sur les vôtres (ou même les vôtres peuvent être basés sur d'autres). Si vous trouvez une utilisation non autorisée de votre code, signalez-le à partir de l'onglet du script que vous voulez signaler."
     derivatives_script_html: "%{script}de%{user},Licence:%{license}%{diff_link:[Diff]}"
@@ -180,6 +183,7 @@ fr:
     listing_sort_created: "Date de création"
     listing_sort_updated: "Date de mise à jour"
     listing_sort_name: "Nom"
+    listing_sort_entry_locales: 'Langues'
     listing_filter_by_site_label: "Montrer les scripts applicables à :"
     listing_filter_by_site_disable: "Tout"
     listing_filter_by_site_all_sites: "(Tous les sites)"
@@ -200,6 +204,10 @@ fr:
       me: Mes scripts
       user: Scripts de %{author_name}
     search_failed: Une erreur s'est produite lors du chargement de vos résultats. Certaines fonctionnalités de recherche peuvent ne pas fonctionner. Nous avons été informés du problème.
+    listing_ratings_explanation: La probabilité que le prochain avis reçois une bonne note, est entre 0 à 1.
+    listing_locale_explanation: Le script est disponible dans toutes les langues sélectionnées.
+    listing_advanced_search_applied: "Recherche avancée appliquée"
+    listing_advanced_search_clear: "Clear"
     import: "Importer des scripts"
     new: "Publiez un script que vous avez écrit"
     new_css: "Publiez un style que vous avez écrit"
@@ -230,7 +238,7 @@ fr:
     post_new_script: "Publier un script"
     post_updated_script: "Publier une nouvelle version"
     type_1_html: "Script utilisateur public - un script utilisateur que tout le monde peut voir et utiliser."
-    type_2_html: "Script utilisateur non listé - un script utilisateur pour utilisation (semi-)privée. Disponible par accès direct, mais aucun lien n'est présent sur %{site_name}."
+    type_2_html: "Script utilisateur non répertorié : un script utilisateur non lié depuis n'importe où sur %{site_name}. Pour les scripts qui sont des travaux en cours ou ceux qui ne seraient généralement pas utiles aux autres. N'empêche pas les autres d'y accéder s'ils connaissent l'URL."
     type_3_html: "Bibliothèque - un script fait pour être inclus dans d'autres scripts à l'aide de <code>@require</code>, et non installé directement."
     override_warning_checkbox_label: "Enregistrer quand même"
     warning_version_not_incremented_html: "Vous avez mis à jour le code source mais n'avez pas modifié la clé <code>@version</code>. Ceux qui ont déjà installé votre script risquent de ne pas recevoir la mise à jour."
@@ -375,7 +383,7 @@ fr:
     install_help_dialog:
       js:
         firefox: Vous devrez installer une extension telle que %{tampermonkey_link:Tampermonkey}, %{greasemonkey_link:Greasemonkey} ou %{violentmonkey_link:Violentmonkey} pour installer ce script.
-        chrome: Vous devrez installer une extension telle que %{tampermonkey_link:Tampermonkey} ou %{violentmonkey_link:Violentmonkey} pour installer ce script.
+        chrome: Vous devrez installer une extension telle que  %{tampermonkey_link:Tampermonkey} pour installer ce script.
         opera: Vous devrez installer une extension telle que %{tampermonkey_link:Tampermonkey} ou %{violentmonkey_link:Violentmonkey} pour installer ce script.
         safari: Vous devrez installer une extension telle que %{tampermonkey_link:Tampermonkey} ou %{userscripts_link:Userscripts} pour installer ce script.
         edge: Vous devrez installer une extension telle que %{tampermonkey_link:Tampermonkey} pour installer ce script.
@@ -524,11 +532,9 @@ fr:
       title: Bureau
       browser_list_html: |
           <ul>
-          <li>Chrome: %{chrome_tampermonkey_link:Tampermonkey} ou %{chrome_violentmonkey_link:Violentmonkey}</li>
-          <li>Firefox: %{firefox_greasemonkey_link:Greasemonkey}, %{firefox_tampermonkey_link:Tampermonkey} ou %{firefox_violentmonkey_link:Violentmonkey}</li>
-          <li>Safari: %{safari_tampermonkey_link:Tampermonkey} ou %{safari_userscripts_link:Userscripts}</li>
-          <li>Microsoft Edge: %{edge_tampermonkey_link:Tampermonkey} ou %{edge_violentmonkey_link:Violentmonkey}</li>
-          <li>Opéra: %{opera_tampermonkey_link:Tampermonkey} ou %{opera_violentmonkey_link:Violentmonkey}</li>
+          <li>Chrome:  %{chrome_tampermonkey_link:Tampermonkey}</li>
+          <li>Firefox: %{firefox_greasemonkey_link:Greasemonkey}, %{firefox_tampermonkey_link:Tampermonkey} ou  %{firefox_violentmonkey_link:Violentmonkey}</li><li>Safari: %{safari_tampermonkey_link:Tampermonkey} ou  %{safari_userscripts_link:Userscripts}</li><li>Microsoft Edge: %{edge_tampermonkey_link:Tampermonkey}</li>
+          <li>Opéra: %{opera_tampermonkey_link:Tampermonkey} ou  %{opera_violentmonkey_link:Violentmonkey}</li>
           <li>Maxthon: %{maxthon_violentmonkey_link:Violentmonkey}</li>
           <li>%{adguard_link:AdGuard}: (aucun logiciel supplémentaire requis)</li>
           </ul>
@@ -984,8 +990,11 @@ fr:
       developers_credit: "%{site_name} lui-même est construit par %{developers_link:ces personnes} avec l'aide de tous ceux qui signalent des bugs et suggèrent des améliorations."
       translators_credit: "%{site_name} a été traduit par %{translators_link:la Greasy Translation Force sur Transifex}:"
       icons_credit: "Les icônes du navigateur sont de %{browserlogos}."
+      donors_credit: "%{site_name} a été soutenu financièrement par  %{donor_links}. Si vous souhaitez apporter un soutien financier,  %{admin_email_link:contactez-nous}."
+      ip_credit: "Géolocalisation d' IP par DB-IP"
     help_with_greasymonkey: "Aide avec Greasemonkey"
     help_with_tampermonkey: "Aide avec Tampermonkey"
+    help_with_violentmonkey: "Aide avec Violentmonkey"
     contact:
       title: "Contactez une personne"
       content_html: >
@@ -1398,6 +1407,7 @@ fr:
     edit_message_header: Modifier le message
     update_message_submit: Mettre à jour le message
     moderator_notice: Si vous souhaitez signaler une violation des règles de %{site_name}, utilisez le lien Signaler sur ce script, cet utilisateur ou ce commentaire. Les modérateurs ne peuvent pas supprimer le contenu basé sur les rapports via des messages directs.
+    rate_limited: Vous avez atteint la limite du nombre de conversations que vous pouvez démarrer. Réessayez plus tard.
   screenshots:
     requirements: "Maximum %{number} images PNG, GIF, JPEG ou WebP, inférieures à %{size} chacune."
   moderator_actions:
@@ -1536,6 +1546,8 @@ fr:
       needs_description: "Les scripts suivants nécessitent une description pour être importés:"
       existing: "Les scripts suivants avaient déjà été importés:"
       failure: "Les scripts suivants n'ont pas pu être importés :"
+      notuserscript: "Les scripts suivants n'ont pas pu être importés. S'il s'agit de bibliothèques JS qui ne sont pas destinées à être directement installées, vous pouvez cliquer sur le lien pour les ajouter en tant que telles."
+      addlibrary: "Ajouter comme bibliothèque"
   mailers:
     script_report:
       report_created_offender:

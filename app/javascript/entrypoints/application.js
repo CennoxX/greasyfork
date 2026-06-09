@@ -17,6 +17,7 @@ import "../expandable-text"
 import "../sidebar"
 import "../announcements"
 import "../forum"
+import "../adsense"
 import "../ethical-ads"
 import "../locale-switcher"
 import "../attachments"
@@ -28,3 +29,4 @@ import '../login'
 import '../header'
 import '../code'
 import '../timezone'
+import '../library-update'

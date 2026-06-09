@@ -221,7 +221,7 @@ class User < ApplicationRecord
   # Returns the user's preferred locale code, if we have that locale available, otherwise nil.
   def available_locale_code
     return nil if locale.nil?
-    return nil unless locale.ui_available
+    return nil unless locale.ui_available?
 
     return locale.code
   end
@@ -471,11 +471,14 @@ class User < ApplicationRecord
     !administrator? && !moderator?
   end
 
-  def api_as_json(with_private_scripts: false)
+  def api_as_json(with_private_scripts: false, script_filter: nil)
     return as_json(include: :scripts) if with_private_scripts
 
+    scripts = all_listable_scripts
+    scripts = script_filter.call(scripts) if script_filter
+
     json = as_json
-    json[:scripts] = all_listable_scripts.as_json
+    json[:scripts] = scripts.as_json
     json
   end
 

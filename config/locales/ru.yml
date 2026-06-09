@@ -40,9 +40,10 @@ ru:
     downgrade: "Откатить до версии %{version}"
     reinstall: "Переустановить версию %{version}"
     old_version_warning: "Это устаревшая версия скрипта. Автоматическое обновление до последней версии будет отключено. Установить?"
-    promoted: "Рекомендуемый скрипт"
-    author_promoted: "Рекомендуемый автором скрипт"
-    promoted_text_html: "Вам также может понравится %{script_link}."
+    post_install:
+      info_html: "Теперь у вас должен быть установлен скрипт «%{script}». Если у вас возникли проблемы с установкой, %{help_link:прочитайте нашу справку}. Ваше мнение важно для поддержания качества скриптов на %{site_name}. После того, как вы опробуете скрипт «%{script}», пожалуйста, %{feedback_link:оставьте отзыв}."
+      promoted_script_intro: "Вам также могут понравиться…"
+      similar_script_html: "%{name} — %{description}"
     library_instructions_html: "Этот скрипт недоступен для установки пользователем. Он является библиотекой, которая подключается к другим скриптам мета-ключом %{code}"
     deleted_notice: "Этот скрипт был удалён."
     deleted_notice_with_reason: "Этот скрипт был удалён на основании %{report_link:этой жалобы}."
@@ -141,6 +142,8 @@ ru:
       month: За последние 30 дней
       year: За последние 365 дней
       all: За всё время
+    stats_library_usages_intro_html: "В следующих скриптах используется URL-адрес этой библиотеки %{site_name} в <code>@require</code>:"
+    stats_library_usages_script_column: Скрипт
     derivatives_title: "%{script_name} – похожие скрипты"
     derivatives_intro: "Эти скрипты могут быть основаны на вашем (или наоборот). Если код используется без вашего разрешения, сообщите об этом на вкладке скрипта «Обсуждения»."
     derivatives_script_html: "%{script} от %{user}, лицензия: %{license} %{diff_link:[Различия]}"
@@ -180,6 +183,7 @@ ru:
     listing_sort_created: "Дата создания"
     listing_sort_updated: "Дата обновления"
     listing_sort_name: "Название"
+    listing_sort_entry_locales: 'Языки'
     listing_filter_by_site_label: "Скрипты:"
     listing_filter_by_site_disable: "Все"
     listing_filter_by_site_all_sites: "(всех сайтов)"
@@ -200,6 +204,10 @@ ru:
       me: Мои скрипты
       user: Скрипты от %{author_name}
     search_failed: Что-то пошло не так. Поиск может частично не работать. Мы уже оповещены о проблеме.
+    listing_ratings_explanation: Вероятность того, что следующий полученный отзыв будет иметь хорошую оценку, от 0 до 1.
+    listing_locale_explanation: Скрипт доступен на любом из выбранных языков.
+    listing_advanced_search_applied: "Применён расширенный поиск"
+    listing_advanced_search_clear: "Очистить"
     import: "Импортировать скрипты"
     new: "Опубликовать ваш скрипт"
     new_css: "Опубликовать ваш стиль"
@@ -230,7 +238,7 @@ ru:
     post_new_script: "Опубликовать скрипт"
     post_updated_script: "Опубликовать новую версию"
     type_1_html: "Скрипт для всех – все его видят и могут использовать."
-    type_2_html: "Скрипт по ссылке – для (-полу)собственного пользования. Доступен по прямой ссылке, но не связан ни с чем на сайте %{site_name}."
+    type_2_html: "Частный пользовательский скрипт - пользовательский скрипт, на который %{site_name} не отображает ни одной ссылки. Для скриптов, которые находятся в стадии разработки, или для тех, которые, как правило, не будут полезны другим пользователям. Другие пользователи все еще могут получить доступ к скрипту, если у них есть URL адрес скрипта."
     type_3_html: "Библиотека – скрипт, включаемый в другие скрипты посредством <code>@require</code>. Не предназначен для установки непосредственно пользователем."
     override_warning_checkbox_label: "Всё равно сохранить"
     warning_version_not_incremented_html: "Вы обновили код, но не увеличили номер версии скрипта <code>@version</code>. Таким образом, те, кто уже устанавливал ваш скрипт, не получат это обновление автоматически."
@@ -375,7 +383,7 @@ ru:
     install_help_dialog:
       js:
         firefox: Чтобы установить этот скрипт, вы сначала должны установить расширение браузера, например %{tampermonkey_link:Tampermonkey}, %{greasemonkey_link:Greasemonkey} или %{violentmonkey_link:Violentmonkey}.
-        chrome: Чтобы установить этот скрипт, вы сначала должны установить расширение браузера, например %{tampermonkey_link:Tampermonkey} или %{violentmonkey_link:Violentmonkey}.
+        chrome: Для установки этого скрипта вам необходимо установить расширение, такое как %{tampermonkey_link:Tampermonkey}.
         opera: Чтобы установить этот скрипт, вы сначала должны установить расширение браузера, например %{tampermonkey_link:Tampermonkey} или %{violentmonkey_link:Violentmonkey}.
         safari: Чтобы установить этот скрипт, вы сначала должны установить расширение браузера, например %{tampermonkey_link:Tampermonkey} или %{userscripts_link:Userscripts}.
         edge: Чтобы установить этот скрипт, сначала вы должны установить расширение браузера, например %{tampermonkey_link:Tampermonkey}.
@@ -526,10 +534,10 @@ ru:
       title: Для ПК
       browser_list_html: |
           <ul>
-          <li>Chrome: %{chrome_tampermonkey_link:Tampermonkey} или %{chrome_violentmonkey_link:Violentmonkey}</li>
+          <li>Chrome: %{chrome_tampermonkey_link:Tampermonkey}</li>
           <li>Firefox: %{firefox_greasemonkey_link:Greasemonkey}, %{firefox_tampermonkey_link:Tampermonkey} или %{firefox_violentmonkey_link:Violentmonkey}</li>
           <li>Safari: %{safari_tampermonkey_link:Tampermonkey} или %{safari_userscripts_link:Userscripts}</li>
-          <li>Microsoft Edge: %{edge_tampermonkey_link:Tampermonkey} или %{edge_violentmonkey_link:Violentmonkey}</li>
+          <li>Microsoft Edge: %{edge_tampermonkey_link:Tampermonkey}</li>
           <li>Opera: %{opera_tampermonkey_link:Tampermonkey} или %{opera_violentmonkey_link:Violentmonkey}</li>
           <li>Maxthon: %{maxthon_violentmonkey_link:Violentmonkey}</li>
           <li>%{adguard_link:AdGuard}: (дополнительного ПО не требуется)</li>
@@ -543,7 +551,7 @@ ru:
           <li>Maxthon: %{maxthon_violentmonkey_link:Violentmonkey}</li>
           <li>Dolphin: %{dolphin_tampermonkey_link:Tampermonkey}</li>
           <li>UC: %{uc_tampermonkey_link:Tampermonkey}</li>
-          <li>%{xbrowser_link:XBrowser}</li>
+          <li>%{xbrowser_link:XБраузер}</li>
           %{locale_specific_browsers}
           </ul>
     ios_browsers:
@@ -990,8 +998,10 @@ ru:
       developers_credit: "Сайт %{site_name} был создан %{developers_link:этими людьми} при участии всех тех, кто сообщал об ошибках и предлагал улучшения."
       translators_credit: "Перевод %{site_name} выполнен командой %{translators_link:Greasy Translation Force на Transifex}:"
       icons_credit: "Значки браузера взяты с %{browserlogos}."
+      donors_credit: "%{site_name} получил финансовую поддержку от %{donor_links}. Если вы хотите оказать финансовую поддержку, %{admin_email_link:свяжитесь с нами}."
     help_with_greasymonkey: "Справка Greasemonkey (англ.)"
     help_with_tampermonkey: "Справка Tampermonkey (англ.)"
+    help_with_violentmonkey: "Справка Violentmonkey (англ.)"
     contact:
       title: "Выйти на контакт с кем-нибудь"
       content_html: >
@@ -1190,7 +1200,7 @@ ru:
       other: "Другое"
     report_intro: "%{report_date} на %{reported_item} поступила жалоба от %{reporter} по причине: %{reason}"
     report_intro_no_reporter: "%{report_date} на %{reported_item} поступила жалоба по причине: %{reason}"
-    report_intro_unauthorized_html: "%{report_date} на «%{reported_script}» поступила жалоба от %{reporter} о том, что скрипт является нелегальной копией скрипта «%{other_script}»."
+    report_intro_unauthorized_html: "%{report_date} на %{reported_script} поступила жалоба от %{reporter} о том, что скрипт является нелегальной копией скрипта «%{other_script}»."
     report_intro_unauthorized_no_reporter_html: "%{report_date} на %{reported_script} поступила жалоба, что он является нелегальной копией скрипта «%{other_script}»."
     report_intro_unauthorized_license: "«%{other_script}» использует лицензию %{license_link: %{license_name}}. Откройте сайт %{tldr_legal_link:tldrlegal.com}, чтобы ознакомиться с этой лицензией."
     report_intro_unauthorized_license_no_url: "«%{other_script}» использует лицензию %{license_name}. Откройте сайт %{tldr_legal_link:tldrlegal.com}, чтобы ознакомиться с этой лицензией."
@@ -1290,7 +1300,7 @@ ru:
     question_heading_html: "Вопрос или комментарий"
     review_heading_html: "Отзыв: %{rating}"
     update_rating_note: "(вы можете изменить оценку позже, добавив комментарий)."
-    update_rating: "Обновить вашу оценку %{script_name}"
+    update_rating: "Обновить вашу оценку «%{script_name}»"
     ratings:
       question: "Без оценки — задать вопрос, оставить комментарий, предложить улучшение"
       bad: "Плохой — скрипт не работает"
@@ -1345,7 +1355,7 @@ ru:
       discussion:
         posted_html: "Создаёт обсуждение «<i>%{title}</i>»"
         replied_html: "Отвечает в обсуждении «<i>%{title}</i>»"
-    review_title: "Отзыв на %{script_name}"
+    review_title: "Отзыв на «%{script_name}»"
     question_title: "Вопрос о «%{script_name}»"
     subscribe: Подписаться
     unsubscribe: Отписаться
@@ -1403,6 +1413,7 @@ ru:
     edit_message_header: Редактирование сообщения
     update_message_submit: Обновить сообщение
     moderator_notice: Если вы хотите сообщить о нарушении правил сайта %{site_name}, то нажмите ссылку «Пожаловаться» на странице скрипта, пользователя или комментария. Модераторы не могут удалять содержимое сайта на основе обычных сообщений.
+    rate_limited: Вы достигли предела количества начинаемых разговоров. Повторите попытку позже.
   screenshots:
     requirements: "Не более %{number} изображений PNG, GIF, JPEG, or WebP, размер каждого меньше %{size}."
   moderator_actions:
@@ -1543,6 +1554,8 @@ ru:
       needs_description: "У следующих скриптов не хватает описания для завершения импорта:"
       existing: "Следующие скрипты были импортированы ранее:"
       failure: "Следующие скрипты не могут быть импортированы:"
+      notuserscript: "Следующие скрипты не удалось импортировать. Если это библиотеки JS, не предназначенные для прямой установки, вы можете щёлкнуть ссылку, чтобы добавить их в соответствующем режиме."
+      addlibrary: "Добавить как библиотеку"
   mailers:
     script_report:
       report_created_offender:
@@ -1579,28 +1592,28 @@ ru:
             Получен ответ на вашу жалобу на %{script_link:%{script_name}} на %{site_name}. Вы можете %{report_link:просмотреть этот ответ}. Модератор примет решение на основе вашей жалобы и этого ответа.
             </p>
       report_upheld_reporter:
-        subject: "Ваша жалоба на %{script_name} на %{site_name} удовлетворена"
+        subject: "Ваша жалоба на «%{script_name}» на %{site_name} удовлетворена"
         body_html: |
             <p>
-            Ваша жалоба на %{script_link:%{script_name}} на %{site_name} была удовлетворена модератором. Скрипт удалён. Вы можете %{report_link:просмотреть эту жалобу}.
+            Ваша жалоба на «%{script_link:%{script_name}}» на %{site_name} была удовлетворена модератором. Скрипт удалён. Вы можете %{report_link:просмотреть эту жалобу}.
             </p>
       report_script_deleted_reporter:
-        subject: "Ваша жалоба на %{script_name} на %{site_name} закрыта"
+        subject: "Ваша жалоба на «%{script_name}» на %{site_name} закрыта"
         body_html: |
             <p>
-            Ваша жалоба на %{script_link:%{script_name}} на %{site_name} была закрыта, потому что автор удалил свой скрипт. Вы можете %{report_link:просмотреть эту жалобу}.
+            Ваша жалоба на «%{script_link:%{script_name}}» на %{site_name} была закрыта, потому что автор удалил свой скрипт. Вы можете %{report_link:просмотреть эту жалобу}.
             </p>
       report_dismissed_reporter:
-        subject: "Ваша жалоба на %{script_name} на %{site_name} отклонена"
+        subject: "Ваша жалоба на «%{script_name}» на %{site_name} отклонена"
         body_html: |
             <p>
-            Ваша жалоба на %{script_link:%{script_name}} на %{site_name} была отклонена модератором. Обжалованный скрипт по-прежнему на сайте. Вы можете %{report_link:просмотреть эту жалобу}.
+            Ваша жалоба на «%{script_link:%{script_name}}» на %{site_name} была отклонена модератором. Обжалованный скрипт по-прежнему на сайте. Вы можете %{report_link:просмотреть эту жалобу}.
             </p>
       report_fixed_reporter:
-        subject: "Ваша жалоба на %{script_name} на %{site_name} решена"
+        subject: "Ваша жалоба на «%{script_name}» на %{site_name} решена"
         body_html: |
             <p>
-            Ваша жалоба на %{script_link:%{script_name}} на %{site_name} была помечена модератором как решённая, потому что, по его мнению, автор устранил проблему. Скрипт по-прежнему на сайте. Вы можете %{report_link:просмотреть эту жалобу}.
+            Ваша жалоба на «%{script_link:%{script_name}}» на %{site_name} была помечена модератором как решённая, потому что, по его мнению, автор устранил проблему. Скрипт по-прежнему на сайте. Вы можете %{report_link:просмотреть эту жалобу}.
             </p>
       reported_outro: "Вы получили это уведомление, потому что оно касается жалобы на скрипт, который вы разместили на %{site_name}. %{notification_preferences_link:Настройка уведомлений.}"
       reporter_outro: "Вы получили это уведомление, потому что вы пожаловались на скрипт на %{site_name}. %{notification_preferences_link:Настройка уведомлений.}"

@@ -1,19 +1,19 @@
 require 'regexp_parser'
 
 class UrlRegexp
-  def self.expand(regexp)
+  def self.expand(regexp_str)
     begin
-      Regexp.new(regexp)
-    rescue StandardError
-      Rails.logger.warn("#{regexp} is not a valid regexp")
+      regexp = Regexp.new(regexp_str)
+    rescue RegexpError
+      Rails.logger.warn("#{regexp_str} is not a valid regexp")
       return []
     end
 
-    tree = Regexp::Parser.parse(regexp)
+    tree = Regexp::Parser.parse(regexp_str)
     result = Node.new(expand_group(tree))
     strings = result.every
     strings.each do |s|
-      Rails.logger.warn("#{s} does not match #{regexp}") unless Regexp.new(regexp).match?(s)
+      Rails.logger.warn("#{s} does not match #{regexp_str}") unless regexp.match?(s)
     end
     strings
   end
@@ -24,18 +24,20 @@ class UrlRegexp
     case group
     when Regexp::Expression::Root, Regexp::Expression::Alternative
       de_single_element(group.expressions.map { |sub| expand_group(sub) }.flatten.compact)
-    when Regexp::Expression::Group::Capture, Regexp::Expression::Assertion::Lookahead, Regexp::Expression::Group::Passive
+    when Regexp::Expression::Group::Capture, Regexp::Expression::Assertion::Lookahead, Regexp::Expression::Group::Passive, Regexp::Expression::Group::Atomic
       de_single_element(group.map { |sub| expand_group(sub) }.flatten)
     when Regexp::Expression::Alternation
       OptionNode.new(de_single_element(group.map { |sub| expand_group(sub) }))
-    when Regexp::Expression::Anchor::BeginningOfLine, Regexp::Expression::Anchor::EndOfLine, Regexp::Expression::Assertion::NegativeLookahead
+    when Regexp::Expression::Anchor::BeginningOfLine, Regexp::Expression::Anchor::EndOfLine, Regexp::Expression::Assertion::NegativeLookahead, Regexp::Expression::Assertion::NegativeLookbehind
       ''
-    when Regexp::Expression::EscapeSequence::Literal
+    when Regexp::Expression::EscapeSequence::Base
       group.char
     when Regexp::Expression::Literal
       group.to_s
     when Regexp::Expression::CharacterType::Any, Regexp::Expression::CharacterType::NonSpace, Regexp::Expression::CharacterType::Word, Regexp::Expression::CharacterType::NonDigit
       'a'
+    when Regexp::Expression::CharacterType::NonWord
+      '-'
     when Regexp::Expression::Anchor::WordBoundary
       '.'
     when Regexp::Expression::CharacterType::Digit

@@ -144,10 +144,16 @@ Style/InverseMethods:
 Style/NumericPredicate:
   Enabled: false
 
+Style/OneClassPerFile:
+  Enabled: false
+
 Style/RedundantArrayFlatten:
   Enabled: false
 
 Style/RedundantReturn:
+  Enabled: false
+
+Style/SafeNavigationChainLength:
   Enabled: false
 
 Style/SymbolArray:

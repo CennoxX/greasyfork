@@ -11,7 +11,7 @@ class UsersController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:webhook]
 
   before_action :authenticate_user!, except: [:show, :webhook, :index]
-  before_action :authorize_for_moderators_only, only: [:ban, :do_ban, :unban, :do_unban, :mark_email_as_confirmed]
+  before_action :authorize_for_moderators_only, only: [:ban, :do_ban, :unban, :do_unban, :mark_email_as_confirmed, :ban_with_ip]
   before_action :check_read_only_mode, except: [:index, :show]
   before_action :disable_browser_caching!, only: [:edit_sign_in]
   before_action :handle_api_request, only: [:index, :show]
@@ -36,7 +36,7 @@ class UsersController < ApplicationController
     end
 
     if current_user&.moderator? && params[:same_ip]
-      other_user = User.find(params[:same_ip])
+      other_user = User.find(params.expect(:same_ip))
       with[:ip] = other_user.current_sign_in_ip
     end
 
@@ -65,14 +65,14 @@ class UsersController < ApplicationController
               end
             end
 
-    @users = User.search(
-      params[:q].presence || '*',
-      fields: [{ name: :word_middle }],
-      where: with,
-      order:,
-      page: page_number,
-      per_page: per_page(default: 100)
-    )
+    @users = apply_searchkick_pagination(User.search(
+                                           params[:q].presence || '*',
+                                           fields: [{ name: :word_middle }],
+                                           where: with,
+                                           order:,
+                                           page: page_number,
+                                           per_page: per_page(default: 100)
+                                         ))
 
     @user_script_counts = Script.listable(script_subset).joins(:authors).where(authors: { user_id: @users.map(&:id) }).group(:user_id).count
 
@@ -89,7 +89,7 @@ class UsersController < ApplicationController
   end
 
   def show
-    @user = User.find(params[:id])
+    @user = User.find(params.expect(:id))
 
     return if redirect_to_slug(@user, :id)
 
@@ -108,10 +108,15 @@ class UsersController < ApplicationController
         @deleted_scripts = @scripts.deleted
         @scripts = @scripts.not_deleted.where(script_type: :public)
 
-        @scripts = ScriptsController.apply_filters(@scripts, params.reverse_merge(language: 'all'), script_subset).paginate(per_page: per_page(default: 50), page: page_number)
+        all_displayable_scripts = ScriptsController.apply_filters(@scripts, params.reverse_merge(language: 'all'), script_subset)
+        @scripts = apply_pagination(all_displayable_scripts, default_per_page: 50)
         @other_site_scripts = (script_subset == :sleazyfork) ? @user.scripts.listable(:greasyfork).count : 0
 
-        @bots = 'noindex,follow' if [:per_page, :set, :site, :sort, :language].any? { |name| params[name].present? }
+        if @user.banned?
+          @bots = 'noindex'
+        elsif [:per_page, :set, :site, :sort, :language].any? { |name| params[name].present? }
+          @bots = 'noindex,follow'
+        end
 
         @link_alternates = [
           { url: current_api_url_with_params(format: :json), type: 'application/json' },
@@ -129,12 +134,18 @@ class UsersController < ApplicationController
 
         @show_profile = !@user.banned? && UserRestrictionService.new(@user).allow_posting_profile?
 
-        @ad_method = choose_ad_method_for_user(@user)
+        @ad_method = choose_ad_method_for_user(displayed_scripts: all_displayable_scripts)
 
         render layout: 'base'
       end
-      format.json { render json: @user.api_as_json(with_private_scripts: @same_user) }
-      format.jsonp { render json: @user.api_as_json(with_private_scripts: @same_user), callback: clean_json_callback_param }
+      format.json do
+        script_filter = ->(scripts) { ScriptsController.apply_filters(scripts, params.reverse_merge(language: 'all'), script_subset) }
+        render json: @user.api_as_json(with_private_scripts: @same_user, script_filter:)
+      end
+      format.jsonp do
+        script_filter = ->(scripts) { ScriptsController.apply_filters(scripts, params.reverse_merge(language: 'all'), script_subset) }
+        render json: @user.api_as_json(with_private_scripts: @same_user, script_filter:), callback: clean_json_callback_param
+      end
     end
   end
 
@@ -148,7 +159,7 @@ class UsersController < ApplicationController
   end
 
   def webhook
-    user = User.find(params[:user_id])
+    user = User.find(params.expect(:user_id))
     changelog_markup = 'text'
     changes, git_url = if request.headers['User-Agent'] == 'Bitbucket-Webhooks/2.0'
                          process_bitbucket_webhook(user)
@@ -241,11 +252,11 @@ class UsersController < ApplicationController
   end
 
   def ban
-    @user = User.find(params[:user_id])
+    @user = User.find(params.expect(:user_id))
   end
 
   def do_ban
-    user = User.find(params[:user_id])
+    user = User.find(params.expect(:user_id))
 
     full_reason = t("reports.reason.#{params[:reason]}", locale: 'en')
     full_reason += ": #{params[:explanation]}" if params[:explanation].present?
@@ -258,14 +269,32 @@ class UsersController < ApplicationController
   end
 
   def unban
-    @user = User.find(params[:user_id])
+    @user = User.find(params.expect(:user_id))
   end
 
   def do_unban
-    user = User.find(params[:user_id])
+    user = User.find(params.expect(:user_id))
     user.unban!(moderator: current_user, reason: params[:reason], undelete_scripts: params[:undelete_scripts] == '1')
     flash[:notice] = "#{user.name} has been unbanned."
     redirect_to user
+  end
+
+  def ban_with_ip
+    other_user = User.find(params.expect(:same_ip))
+    ip = other_user.current_sign_in_ip
+
+    reason = Report::REASON_SPAM
+    full_reason = t("reports.reason.#{reason}", locale: 'en')
+    User.search('*', where: { ip:, banned: false }).each do |user|
+      next if user.banned?
+
+      user.ban!(moderator: current_user, reason: full_reason)
+      user.delete_all_comments!(by_user: current_user, spam: true)
+    end
+
+    # rubocop:disable Rails/I18nLocaleTexts
+    redirect_to users_path(same_ip: params[:same_ip]), notice: 'Users with this IP have been banned.'
+    # rubocop:enable Rails/I18nLocaleTexts
   end
 
   def delete_info
@@ -316,7 +345,7 @@ class UsersController < ApplicationController
   end
 
   def mark_email_as_confirmed
-    user = User.find(params[:id])
+    user = User.find(params.expect(:id))
     user.confirm
     user.save
     # rubocop:disable Rails/I18nLocaleTexts

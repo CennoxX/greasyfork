@@ -12,7 +12,7 @@ class MessagesController < ApplicationController
     @message.construct_mentions(detect_possible_mentions(@message.content, @message.content_markup))
 
     unless @message.save
-      @messages = @conversation.messages.paginate(page: params[:page], per_page:)
+      @messages = apply_pagination(@conversation.messages)
       @show_moderator_notice = ConversationsController.show_moderator_notice?(current_user, @conversation.users)
       render 'conversations/show'
       return
@@ -32,7 +32,7 @@ class MessagesController < ApplicationController
   end
 
   def update
-    message = @conversation.messages.find(params[:id])
+    message = @conversation.messages.find(params.expect(:id))
     unless message.editable_by?(current_user)
       render_access_denied
       return
@@ -56,12 +56,12 @@ class MessagesController < ApplicationController
   private
 
   def find_conversation
-    user = User.find(params[:user_id])
+    user = User.find(params.expect(:user_id))
     unless user == current_user
       render_404('You can only view your own conversations.')
       return
     end
-    @conversation = user.conversations.find(params[:conversation_id])
+    @conversation = user.conversations.find(params.expect(:conversation_id))
   end
 
   def message_params
